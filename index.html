@@ -202,6 +202,13 @@
   table.data-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
   table.data-table tr:hover td{background:#FBFAF7;}
   .status-select{border:1px solid var(--border);border-radius:3px;font-size:12px;padding:3px 6px;background:#fff;}
+  .status-banner{
+    display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:3px; font-size:13.5px; margin-top:6px;
+  }
+  .status-banner.ok{background:var(--success-bg); color:var(--success); border:1px solid #C9E3D3;}
+  .status-banner.closed{background:var(--brass-tint); color:#8a6508; border:1px solid #EEDDB0;}
+  .ledger-item .li-edit-fields{margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .ledger-item .li-actions{flex:none; display:flex; gap:4px;}
   .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:3px;}
 
   .edit-item,.edit-justifikasi,.edit-lokasi,.edit-bilangan{
@@ -286,8 +293,13 @@
   <section id="view-sekolah" hidden>
     <div id="sekolahChooser">
       <div class="greet">
-        <h1 id="sekolahName">—</h1>
-        <div class="meta" id="sekolahMeta">—</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+          <div>
+            <h1 id="sekolahName">—</h1>
+            <div class="meta" id="sekolahMeta">—</div>
+          </div>
+          <button class="btn btn-ghost" id="btnOpenMySubmissions">Lihat / Sunting Permohonan Saya</button>
+        </div>
       </div>
       <div class="cat-grid">
         <div class="cat-card">
@@ -352,8 +364,33 @@
     </div>
 
     <div class="submit-bar" id="submitBar" hidden>
-      <div class="count">Sedia untuk hantar: <b id="submitCount">0</b> item. Permohonan tidak boleh diubah selepas dihantar.</div>
+      <div class="count">Sedia untuk hantar: <b id="submitCount">0</b> item. <span id="submitWarnText">Permohonan tidak boleh diubah selepas dihantar.</span></div>
       <button class="btn btn-primary" id="btnSubmitAll">Hantar Semua Permohonan</button>
+    </div>
+  </section>
+
+  <!-- ===================== PERMOHONAN SAYA (lihat/sunting) ===================== -->
+  <section id="view-mysubmissions" hidden>
+    <div class="greet">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h1>Permohonan Saya</h1>
+          <div class="meta" id="mySubMeta">—</div>
+        </div>
+        <button class="btn btn-ghost" id="btnBackFromMySubmissions">&larr; Kembali</button>
+      </div>
+    </div>
+
+    <div id="editStatusBanner"></div>
+
+    <div class="ledger-title" style="margin-top:22px;">
+      <h2>Senarai Permohonan Dihantar</h2>
+      <span id="mySubCount">0 item</span>
+    </div>
+    <div id="mySubList"></div>
+
+    <div class="form-actions" style="margin-top:24px;">
+      <button class="btn btn-primary" id="btnAddMoreFromMySub">+ Tambah Permohonan Baharu</button>
     </div>
   </section>
 
@@ -362,9 +399,12 @@
     <div class="confirm-box">
       <div class="confirm-mark">&#10003;</div>
       <h1>Permohonan Berjaya Dihantar</h1>
-      <p>Permohonan sekolah anda telah direkodkan dan boleh dipantau oleh JPN Kedah. Simpan nombor rujukan ini untuk rekod sekolah.</p>
+      <p id="confirmText">Permohonan sekolah anda telah direkodkan dan boleh dipantau oleh JPN Kedah. Simpan nombor rujukan ini untuk rekod sekolah.</p>
       <div class="confirm-ref" id="confirmRef">RUJ-000000</div>
-      <div><button class="btn btn-primary" id="btnBackToChooser">Buat Permohonan Lain</button></div>
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="btnViewMySubmissions">Lihat Permohonan Saya</button>
+        <button class="btn btn-primary" id="btnBackToChooser">Buat Permohonan Lain</button>
+      </div>
     </div>
   </section>
 
@@ -380,6 +420,17 @@
       <div class="stat-card"><div class="n" id="statAsetAlih">0</div><div class="l">Permohonan Aset Alih</div></div>
       <div class="stat-card brass"><div class="n" id="statSelenggara">0</div><div class="l">Permohonan Selenggara Kecil</div></div>
       <div class="stat-card brass"><div class="n" id="statSekolah">0</div><div class="l">Sekolah Terlibat</div></div>
+    </div>
+
+    <div class="panel" id="settingsBar" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;" hidden>
+      <div>
+        <div style="font-weight:600; color:var(--navy); font-size:14.5px;">Kebenaran Sekolah Sunting Permohonan</div>
+        <div style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">Bila diaktifkan, sekolah boleh sunting semula permohonan sendiri melalui "Permohonan Saya" selepas hantar.</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span id="editSettingStatusText" style="font-size:13px; font-weight:600;">—</span>
+        <label class="switch"><input type="checkbox" id="toggleEditSetting"><span class="slider"></span></label>
+      </div>
     </div>
 
     <div class="tabs">
@@ -503,11 +554,14 @@ let demoPermohonan = [
   { id:"RUJ-100340-1", tarikh:"2026-09-01", kategori:"AsetAlih", kodSekolah:"AAF5012", sekolah:"SK Baling", ppd:"PPD Baling", item:"SMART BOARD", bilangan:1, lokasi:"Kelas 6 Cemerlang", justifikasi:"Tambahan", status:"Baru" },
   { id:"RUJ-100340-2", tarikh:"2026-09-01", kategori:"Selenggara", kodSekolah:"AAF5012", sekolah:"SK Baling", ppd:"PPD Baling", item:"PAGAR", bilangan:null, lokasi:"Pagar hadapan sekolah", justifikasi:"Uzur", status:"Baru" }
 ];
+let editSettingDemo = true; // Kebenaran sekolah sunting permohonan — Pentadbir boleh togol dalam mod demo
 
 /* =========================================================================
    STATE
    ========================================================================= */
-let state = { role:null, user:null, pending:[], activeCat:null };
+let state = { role:null, user:null, pending:[], activeCat:null, editAllowed:true };
+let schoolMasterAA = [];
+let schoolMasterSK = [];
 
 /* =========================================================================
    HELPER — panggilan backend
@@ -543,6 +597,28 @@ function demoHandler(action, p){
         }
         case "getMasterAsetAlih": resolve(masterAsetAlih.filter(i=>i.aktif).map(i=>i.nama)); break;
         case "getMasterSelenggara": resolve(masterSelenggara.filter(i=>i.aktif).map(i=>i.nama)); break;
+        case "getEditSetting": resolve({benarkanEdit: editSettingDemo}); break;
+        case "adminSetEditSetting": {
+          editSettingDemo = (p.aktif === "true" || p.aktif === true);
+          resolve({ok:true});
+          break;
+        }
+        case "getSekolahPermohonan": {
+          resolve(demoPermohonan.filter(d=>d.kodSekolah.toUpperCase()===String(p.kodSekolah).toUpperCase()));
+          break;
+        }
+        case "sekolahUpdateEntry": {
+          if(!editSettingDemo){ resolve({ok:false,msg:"Tempoh sunting permohonan telah ditutup oleh JPN. Hubungi PPD/JPN Kedah untuk pindaan."}); break; }
+          const rec = demoPermohonan.find(x=>x.id===p.id);
+          if(!rec){ resolve({ok:false,msg:"Rekod tidak dijumpai."}); break; }
+          if(rec.kodSekolah.toUpperCase() !== String(p.kodSekolah).toUpperCase()){ resolve({ok:false,msg:"Anda tidak mempunyai kebenaran untuk sunting rekod ini."}); break; }
+          if(p.item) rec.item = p.item;
+          if(p.kategori==="AsetAlih" && p.bilangan!=="") rec.bilangan = p.bilangan;
+          if(p.lokasi) rec.lokasi = p.lokasi;
+          if(p.justifikasi) rec.justifikasi = p.justifikasi;
+          resolve({ok:true});
+          break;
+        }
         case "submitEntries": {
           const batchRef = "RUJ-" + Date.now().toString().slice(-8);
           p.entries.forEach((e,i)=>{
@@ -598,7 +674,7 @@ function demoHandler(action, p){
    DOM refs
    ========================================================================= */
 const $ = (sel)=>document.querySelector(sel);
-const views = { login:$("#view-login"), sekolah:$("#view-sekolah"), confirm:$("#view-confirm"), admin:$("#view-admin") };
+const views = { login:$("#view-login"), sekolah:$("#view-sekolah"), mysubmissions:$("#view-mysubmissions"), confirm:$("#view-confirm"), admin:$("#view-admin") };
 function showView(name){ Object.values(views).forEach(v=>v.hidden = true); views[name].hidden = false; }
 
 /* =========================================================================
@@ -650,6 +726,9 @@ $("#btnLogin").addEventListener("click", async ()=>{
     $("#sekolahMeta").textContent = `Kod Sekolah: ${res.user.kod} · ${res.user.ppd}`;
     resetSekolahView();
     await loadMasterLists();
+    const editSetting = await gasCall("getEditSetting", {});
+    state.editAllowed = !!(editSetting && editSetting.benarkanEdit);
+    applyEditTextState();
     showView("sekolah");
   } else {
     $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> <span class="role-tag">${res.user.peranan}</span>`;
@@ -662,11 +741,27 @@ $("#btnLogin").addEventListener("click", async ()=>{
 });
 
 $("#btnLogout").addEventListener("click", ()=>{
-  state = {role:null,user:null,pending:[],activeCat:null};
+  state = {role:null,user:null,pending:[],activeCat:null,editAllowed:true};
   $("#whoBar").hidden = true;
   $("#inputId").value = ""; $("#inputPw").value = "";
   showView("login");
 });
+
+/** Kemas kini teks amaran/status merentasi skrin sekolah ikut state.editAllowed */
+function applyEditTextState(){
+  const warnEl = $("#submitWarnText");
+  if(warnEl){
+    warnEl.textContent = state.editAllowed
+      ? "Selepas hantar, anda masih boleh sunting senarai ini melalui \u201cPermohonan Saya\u201d sehingga JPN menutup tempoh sunting."
+      : "Permohonan tidak boleh diubah selepas dihantar.";
+  }
+  const confirmTextEl = $("#confirmText");
+  if(confirmTextEl){
+    confirmTextEl.textContent = state.editAllowed
+      ? "Permohonan sekolah anda telah direkodkan dan boleh dipantau oleh JPN Kedah. Anda masih boleh menyunting senarai ini melalui \u201cPermohonan Saya\u201d sehingga JPN menutup tempoh sunting."
+      : "Permohonan sekolah anda telah direkodkan dan boleh dipantau oleh JPN Kedah. Simpan nombor rujukan ini untuk rekod sekolah.";
+  }
+}
 
 /* =========================================================================
    SEKOLAH
@@ -680,6 +775,7 @@ function resetSekolahView(){
 async function loadMasterLists(){
   const aa = await gasCall("getMasterAsetAlih", {});
   const sk = await gasCall("getMasterSelenggara", {});
+  schoolMasterAA = aa; schoolMasterSK = sk;
   $("#aaItem").innerHTML = aa.map(i=>`<option value="${i}">${i}</option>`).join("");
   $("#skJenis").innerHTML = sk.map(i=>`<option value="${i}">${i}</option>`).join("");
 }
@@ -741,7 +837,10 @@ function renderLedger(){
 }
 $("#btnSubmitAll").addEventListener("click", async ()=>{
   if(state.pending.length===0) return;
-  if(!confirm(`Hantar ${state.pending.length} permohonan? Senarai ini tidak boleh diubah selepas dihantar.`)) return;
+  const confirmMsg = state.editAllowed
+    ? `Hantar ${state.pending.length} permohonan?`
+    : `Hantar ${state.pending.length} permohonan? Senarai ini tidak boleh diubah selepas dihantar.`;
+  if(!confirm(confirmMsg)) return;
   $("#btnSubmitAll").disabled = true; $("#btnSubmitAll").textContent = "Menghantar…";
   const res = await gasCall("submitEntries", {
     kodSekolah: state.user.kod,
@@ -752,6 +851,116 @@ $("#btnSubmitAll").addEventListener("click", async ()=>{
   else { alert(res.msg || "Gagal menghantar permohonan. Sila cuba lagi."); }
 });
 $("#btnBackToChooser").addEventListener("click", ()=>{ resetSekolahView(); showView("sekolah"); });
+$("#btnViewMySubmissions").addEventListener("click", ()=>{ openMySubmissions(); });
+$("#btnOpenMySubmissions").addEventListener("click", ()=>{ openMySubmissions(); });
+$("#btnBackFromMySubmissions").addEventListener("click", ()=>{ showView("sekolah"); });
+$("#btnAddMoreFromMySub").addEventListener("click", ()=>{ resetSekolahView(); showView("sekolah"); });
+
+/* ---------- Permohonan Saya (lihat/sunting) ---------- */
+let mySubEditingId = null;
+
+async function openMySubmissions(){
+  $("#mySubMeta").textContent = `Kod Sekolah: ${state.user.kod} · ${state.user.ppd}`;
+  mySubEditingId = null;
+  await refreshMySubmissions();
+  showView("mysubmissions");
+}
+
+async function refreshMySubmissions(){
+  const rows = await gasCall("getSekolahPermohonan", { kodSekolah: state.user.kod });
+  renderEditBanner();
+  renderMySubList(rows);
+}
+
+function renderEditBanner(){
+  const banner = $("#editStatusBanner");
+  if(state.editAllowed){
+    banner.innerHTML = `<div class="status-banner ok">✓ Sunting dibenarkan buat masa ini — anda boleh betulkan permohonan sendiri sehingga JPN menutup tempoh ini.</div>`;
+  } else {
+    banner.innerHTML = `<div class="status-banner closed">Tempoh sunting telah ditutup oleh JPN. Permohonan di bawah bersifat baca-sahaja — hubungi PPD/JPN Kedah untuk pindaan.</div>`;
+  }
+}
+
+function mySubItemOptions(kategori, current){
+  const list = (kategori==="AsetAlih" ? schoolMasterAA : schoolMasterSK).slice();
+  if(current && !list.includes(current)) list.unshift(current);
+  return list.map(n=>`<option value="${n}" ${n===current?"selected":""}>${n}</option>`).join("");
+}
+function mySubJustifikasiOptions(kategori, current){
+  const opts = kategori==="AsetAlih"
+    ? ["Tambahan","Sedia ada Telah Rosak","Belum Ada"]
+    : ["Anai-anai","Tersumbat","Rosak (pecah/reput/lekang)","Uzur","Kerosakan Berulang"];
+  return opts.map(o=>`<option value="${o}" ${o===current?"selected":""}>${o}</option>`).join("");
+}
+
+function renderMySubList(rows){
+  $("#mySubCount").textContent = rows.length + " item";
+  const list = $("#mySubList");
+  if(rows.length===0){
+    list.innerHTML = '<div class="ledger-empty">Tiada permohonan direkodkan lagi.</div>';
+    return;
+  }
+  list.innerHTML = rows.map((d,idx)=>{
+    const isEditing = state.editAllowed && d.id===mySubEditingId;
+    const line1 = d.kategori==="AsetAlih" ? `${d.bilangan} unit di ${d.lokasi}` : d.lokasi;
+    if(!isEditing){
+      return `
+      <div class="ledger-item ${d.kategori==="Selenggara"?"selenggara":""}" data-row-id="${d.id}">
+        <div class="ledger-num">${idx+1}</div>
+        <div class="ledger-body">
+          <div class="li-title">${d.item} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">— ${d.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil"} · ${d.status}</span></div>
+          <div class="li-meta">${line1} · ${d.justifikasi}</div>
+        </div>
+        ${state.editAllowed ? `<div class="li-actions"><button class="btn-ghost-sm" data-mysub-edit data-id="${d.id}">Edit</button></div>` : ""}
+      </div>`;
+    }
+    return `
+    <div class="ledger-item ${d.kategori==="Selenggara"?"selenggara":""}" data-row-id="${d.id}">
+      <div class="ledger-num">${idx+1}</div>
+      <div class="ledger-body">
+        <div class="li-title">${d.item} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">— ${d.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil"} · ${d.status}</span></div>
+        <div class="li-edit-fields">
+          <select class="edit-item">${mySubItemOptions(d.kategori, d.item)}</select>
+          ${d.kategori==="AsetAlih" ? `<input type="number" class="edit-bilangan" value="${d.bilangan}" min="1" style="width:70px;">` : ""}
+          <input type="text" class="edit-lokasi" value="${d.lokasi}" style="width:180px;">
+          <select class="edit-justifikasi">${mySubJustifikasiOptions(d.kategori, d.justifikasi)}</select>
+        </div>
+      </div>
+      <div class="li-actions">
+        <button class="btn-ghost-sm" data-mysub-save data-id="${d.id}" data-kategori="${d.kategori}">Simpan</button>
+        <button class="btn-ghost-sm" data-mysub-cancel>Batal</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll("[data-mysub-edit]").forEach(b=>{
+    b.addEventListener("click", async ()=>{ mySubEditingId = b.dataset.id; await refreshMySubmissions(); });
+  });
+  list.querySelectorAll("[data-mysub-cancel]").forEach(b=>{
+    b.addEventListener("click", async ()=>{ mySubEditingId = null; await refreshMySubmissions(); });
+  });
+  list.querySelectorAll("[data-mysub-save]").forEach(b=>{
+    b.addEventListener("click", async ()=>{
+      const id = b.dataset.id;
+      const kategori = b.dataset.kategori;
+      const row = list.querySelector(`[data-row-id="${CSS.escape(id)}"]`);
+      const item = row.querySelector(".edit-item").value;
+      const bilangan = kategori==="AsetAlih" ? row.querySelector(".edit-bilangan").value.trim() : "";
+      const lokasi = row.querySelector(".edit-lokasi").value.trim();
+      const justifikasi = row.querySelector(".edit-justifikasi").value;
+      if(!lokasi || (kategori==="AsetAlih" && !bilangan)){ alert("Sila lengkapkan semua medan."); return; }
+      b.disabled = true; b.textContent = "Menyimpan…";
+      const res = await gasCall("sekolahUpdateEntry", { id, kategori, kodSekolah: state.user.kod, item, bilangan, lokasi, justifikasi });
+      if(res.ok){
+        mySubEditingId = null;
+        await refreshMySubmissions();
+      } else {
+        alert(res.msg || "Gagal simpan.");
+        b.disabled = false; b.textContent = "Simpan";
+      }
+    });
+  });
+}
 
 /* =========================================================================
    ADMIN
@@ -780,7 +989,32 @@ async function initAdmin(){
   const m = await gasCall("adminGetMaster", {});
   admMaster = {asetAlih:m.asetAlih, selenggara:m.selenggara};
   renderMasterLists();
+  await initSettingsBar();
 }
+
+async function initSettingsBar(){
+  const bar = $("#settingsBar");
+  if(state.user.peranan !== "Pentadbir"){ bar.hidden = true; return; }
+  bar.hidden = false;
+  const setting = await gasCall("getEditSetting", {});
+  const aktif = !!(setting && setting.benarkanEdit);
+  $("#toggleEditSetting").checked = aktif;
+  $("#editSettingStatusText").textContent = aktif ? "Aktif" : "Tidak Aktif";
+  $("#editSettingStatusText").style.color = aktif ? "var(--success)" : "var(--text-muted)";
+}
+$("#toggleEditSetting").addEventListener("change", async (e)=>{
+  const aktif = e.target.checked;
+  e.target.disabled = true;
+  const res = await gasCall("adminSetEditSetting", { aktif });
+  e.target.disabled = false;
+  if(res.ok){
+    $("#editSettingStatusText").textContent = aktif ? "Aktif" : "Tidak Aktif";
+    $("#editSettingStatusText").style.color = aktif ? "var(--success)" : "var(--text-muted)";
+  } else {
+    e.target.checked = !aktif;
+    alert(res.msg || "Gagal kemas kini tetapan.");
+  }
+});
 
 function renderAdminStats(){
   $("#statTotal").textContent = admData.length;
