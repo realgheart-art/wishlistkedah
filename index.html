@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permohonan Aset Alih &amp; Penyelenggaraan — JPN Kedah</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0F2942;
+    --navy-light:#1C3A57;
+    --navy-tint:#EDF1F5;
+    --brass:#B8860B;
+    --brass-light:#D4A017;
+    --brass-tint:#FBF3E1;
+    --bg:#FAF8F4;
+    --surface:#FFFFFF;
+    --text:#1C2226;
+    --text-muted:#5B6570;
+    --border:#DCD5C8;
+    --success:#2F6F4E;
+    --success-bg:#EAF3EC;
+    --danger:#A6362C;
+    --danger-bg:#FBECEA;
+    --font-display:'Fraunces', serif;
+    --font-body:'Plus Jakarta Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-body);
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{font-family:var(--font-display);font-weight:600;color:var(--navy);letter-spacing:-0.01em;}
+  a{color:var(--navy);}
+  button{font-family:var(--font-body);cursor:pointer;}
+  input,select,textarea{font-family:var(--font-body);}
+
+  /* ---------- shell ---------- */
+  header.topbar{
+    background:var(--navy);
+    border-bottom:3px solid var(--brass);
+    color:#fff;
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  header.topbar .brand{display:flex;align-items:center;gap:12px;}
+  header.topbar .brand-mark{
+    width:36px;height:36px;border:2px solid var(--brass);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:700;color:var(--brass-light);font-size:15px;
+  }
+  header.topbar .brand-text .t1{font-family:var(--font-display);font-size:17px;font-weight:600;line-height:1.15;}
+  header.topbar .brand-text .t2{font-size:12px;color:#B9C6D4;letter-spacing:.02em;}
+  header.topbar .who{display:flex;align-items:center;gap:14px;font-size:13.5px;color:#DCE4EB;}
+  header.topbar .who b{color:#fff;}
+  header.topbar .logout{
+    background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;
+    padding:7px 14px;border-radius:3px;font-size:13px;
+  }
+  header.topbar .logout:hover{background:rgba(255,255,255,.1);}
+
+  main{max-width:1120px;margin:0 auto;padding:36px 24px 80px;}
+  .narrow{max-width:640px;margin:0 auto;}
+
+  [hidden]{display:none !important;}
+
+  /* ---------- login ---------- */
+  .login-wrap{max-width:420px;margin:56px auto 0;}
+  .login-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:28px;}
+  .login-tab{
+    flex:1;text-align:center;padding:12px 8px;background:none;border:none;
+    font-size:14px;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .login-tab.active{color:var(--navy);border-bottom-color:var(--brass);font-weight:600;}
+  .login-card h1{font-size:24px;margin:0 0 6px;}
+  .login-card p.lead{color:var(--text-muted);font-size:14px;margin:0 0 26px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;color:var(--text-muted);margin-bottom:6px;}
+  .field input,.field select,.field textarea{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:3px;
+    font-size:14.5px;background:#fff;color:var(--text);
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{
+    outline:none;border-color:var(--navy);box-shadow:0 0 0 3px var(--navy-tint);
+  }
+  .field .hint{font-size:12px;color:var(--text-muted);margin-top:5px;}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:11px 20px;border-radius:3px;border:none;font-size:14.5px;font-weight:600;
+  }
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-primary:hover{background:var(--navy-light);}
+  .btn-primary:disabled{background:#9AA7B2;cursor:not-allowed;}
+  .btn-brass{background:var(--brass);color:#fff;}
+  .btn-brass:hover{background:var(--brass-light);}
+  .btn-ghost{background:transparent;color:var(--navy);border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--navy);}
+  .btn-danger-ghost{background:transparent;color:var(--danger);border:1px solid var(--danger-bg);}
+  .btn-danger-ghost:hover{background:var(--danger-bg);}
+  .btn-block{width:100%;}
+  .error-msg{
+    background:var(--danger-bg);color:var(--danger);border:1px solid #F0C9C4;
+    padding:10px 12px;border-radius:3px;font-size:13.5px;margin-bottom:16px;
+  }
+  .demo-note{
+    margin-top:22px;font-size:12px;color:var(--text-muted);background:var(--brass-tint);
+    border:1px solid #EEDDB0;padding:10px 12px;border-radius:3px;
+  }
+
+  /* ---------- category chooser ---------- */
+  .greet{margin-bottom:28px;}
+  .greet h1{font-size:26px;margin:0 0 4px;}
+  .greet .meta{color:var(--text-muted);font-size:13.5px;}
+  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px;}
+  @media (max-width:640px){.cat-grid{grid-template-columns:1fr;}}
+  .cat-card{
+    text-align:left;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--navy);
+    border-radius:3px;padding:22px 20px;
+  }
+  .cat-card.selenggara{border-left-color:var(--brass);}
+  .cat-card h3{font-size:18px;margin:0 0 6px;}
+  .cat-card p{font-size:13.5px;color:var(--text-muted);margin:0 0 16px;}
+
+  /* ---------- entry form ---------- */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:24px;margin-bottom:20px;}
+  .panel-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+  .panel-head h2{font-size:18px;margin:0;}
+  .panel-head .badge{
+    font-size:11.5px;padding:3px 9px;border-radius:20px;background:var(--navy-tint);color:var(--navy);font-weight:600;
+  }
+  .panel-head .badge.brass{background:var(--brass-tint);color:#8a6508;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
+  @media (max-width:560px){.grid2{grid-template-columns:1fr;}}
+  .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
+
+  /* ---------- pending list (ledger) ---------- */
+  .ledger-title{display:flex;align-items:baseline;justify-content:space-between;margin:36px 0 12px;}
+  .ledger-title h2{font-size:16px;margin:0;color:var(--navy);}
+  .ledger-title span{font-size:13px;color:var(--text-muted);}
+  .ledger-empty{
+    border:1px dashed var(--border);border-radius:3px;padding:26px;text-align:center;
+    color:var(--text-muted);font-size:13.5px;
+  }
+  .ledger-item{
+    display:flex;gap:14px;align-items:flex-start;
+    border-top:1px solid var(--border);padding:14px 4px;
+  }
+  .ledger-item:first-child{border-top:none;}
+  .ledger-num{
+    flex:none;width:26px;height:26px;border-radius:50%;background:var(--navy-tint);color:var(--navy);
+    font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;
+  }
+  .ledger-item.selenggara .ledger-num{background:var(--brass-tint);color:#8a6508;}
+  .ledger-body{flex:1;}
+  .ledger-body .li-title{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--navy);}
+  .ledger-body .li-meta{font-size:13px;color:var(--text-muted);margin-top:2px;}
+  .ledger-remove{
+    flex:none;background:none;border:none;color:var(--text-muted);font-size:18px;line-height:1;padding:4px 6px;
+  }
+  .ledger-remove:hover{color:var(--danger);}
+
+  .submit-bar{
+    position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);
+    padding:16px 0 4px;margin-top:28px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .submit-bar .count{font-size:13.5px;color:var(--text-muted);}
+  .submit-bar .count b{color:var(--navy);}
+
+  /* ---------- confirmation ---------- */
+  .confirm-box{text-align:center;padding:50px 20px;}
+  .confirm-mark{
+    width:56px;height:56px;border-radius:50%;background:var(--success-bg);color:var(--success);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:26px;
+  }
+  .confirm-box h1{font-size:22px;margin:0 0 8px;}
+  .confirm-box p{color:var(--text-muted);font-size:14px;max-width:440px;margin:0 auto 22px;}
+  .confirm-ref{
+    display:inline-block;font-family:var(--font-display);font-size:15px;background:var(--navy-tint);
+    color:var(--navy);padding:8px 16px;border-radius:3px;margin-bottom:26px;
+  }
+
+  /* ---------- admin ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
+  @media (max-width:820px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--navy);border-radius:3px;padding:16px 18px;}
+  .stat-card .n{font-family:var(--font-display);font-size:26px;color:var(--navy);font-weight:600;}
+  .stat-card .l{font-size:12.5px;color:var(--text-muted);margin-top:2px;}
+  .stat-card.brass{border-left-color:var(--brass);}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .toolbar select,.toolbar input{padding:8px 10px;border:1px solid var(--border);border-radius:3px;font-size:13.5px;}
+  .toolbar .spacer{flex:1;}
+
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+  .tab-btn{
+    background:none;border:none;padding:10px 16px;font-size:14px;color:var(--text-muted);
+    border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .tab-btn.active{color:var(--navy);font-weight:600;border-bottom-color:var(--brass);}
+
+  table.data-table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);}
+  table.data-table th{
+    text-align:left;background:var(--navy-tint);color:var(--navy);font-size:12px;font-weight:700;
+    padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  table.data-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+  table.data-table tr:hover td{background:#FBFAF7;}
+  .status-pill{font-size:11.5px;padding:3px 9px;border-radius:20px;font-weight:600;}
+  .status-baru{background:var(--brass-tint);color:#8a6508;}
+  .status-tindakan{background:var(--navy-tint);color:var(--navy);}
+  .status-selesai{background:var(--success-bg);color:var(--success);}
+  .status-select{border:1px solid var(--border);border-radius:3px;font-size:12px;padding:3px 6px;background:#fff;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:3px;}
+
+  .master-list{background:var(--surface);border:1px solid var(--border);border-radius:3px;}
+  .master-row{
+    display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);
+  }
+  .master-row:last-child{border-bottom:none;}
+  .master-row .nm{flex:1;font-size:14px;}
+  .master-row.inactive .nm{color:var(--text-muted);text-decoration:line-through;}
+  .switch{position:relative;width:38px;height:21px;flex:none;}
+  .switch input{opacity:0;width:0;height:0;}
+  .switch .slider{position:absolute;inset:0;background:#C7CDD3;border-radius:20px;transition:.15s;}
+  .switch .slider:before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s;}
+  .switch input:checked + .slider{background:var(--navy);}
+  .switch input:checked + .slider:before{transform:translateX(17px);}
+  .add-master-row{display:flex;gap:10px;padding:14px 16px;background:#FBFAF7;}
+  .add-master-row input{flex:1;}
+
+  .empty-state{text-align:center;padding:50px 20px;color:var(--text-muted);font-size:13.5px;}
+
+  .footnote{margin-top:40px;font-size:12px;color:var(--text-muted);text-align:center;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">JPN</div>
+    <div class="brand-text">
+      <div class="t1">Aset Alih &amp; Penyelenggaraan</div>
+      <div class="t2">Jabatan Pendidikan Negeri Kedah</div>
+    </div>
+  </div>
+  <div class="who" id="whoBar" hidden>
+    <span id="whoLabel"></span>
+    <button class="logout" id="btnLogout">Log Keluar</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== LOGIN ===================== -->
+  <section id="view-login">
+    <div class="login-wrap">
+      <div class="login-tabs">
+        <button class="login-tab active" data-role="sekolah">Log Masuk Sekolah</button>
+        <button class="login-tab" data-role="admin">Log Masuk Admin JPN</button>
+      </div>
+      <div class="login-card">
+        <h1 id="loginTitle">Portal Sekolah</h1>
+        <p class="lead" id="loginLead">Gunakan Kod Sekolah sebagai ID dan Kata Laluan.</p>
+        <div id="loginError"></div>
+        <div class="field">
+          <label id="labelId">Kod Sekolah</label>
+          <input type="text" id="inputId" placeholder="Contoh: AAB1023" autocomplete="username">
+        </div>
+        <div class="field">
+          <label id="labelPw">Kata Laluan</label>
+          <input type="password" id="inputPw" placeholder="Kod Sekolah anda" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary btn-block" id="btnLogin">Log Masuk</button>
+        <div class="demo-note" id="demoNote"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SEKOLAH ===================== -->
+  <section id="view-sekolah" hidden>
+
+    <div id="sekolahChooser">
+      <div class="greet">
+        <h1 id="sekolahName">—</h1>
+        <div class="meta" id="sekolahMeta">—</div>
+      </div>
+
+      <div class="cat-grid">
+        <div class="cat-card">
+          <h3>Aset Alih</h3>
+          <p>Permohonan perabot, peralatan ICT dan kelengkapan sekolah — kerusi, meja, komputer, penyaman udara dan lain-lain.</p>
+          <button class="btn btn-primary" data-cat="AsetAlih">+ Tambah Permohonan Aset Alih</button>
+        </div>
+        <div class="cat-card selenggara">
+          <h3>Selenggara Kecil</h3>
+          <p>Permohonan kerja penyelenggaraan bangunan — bumbung, tandas, elektrik, lantai dan lain-lain kerosakan struktur.</p>
+          <button class="btn btn-brass" data-cat="Selenggara">+ Tambah Permohonan Selenggara Kecil</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aset Alih entry form -->
+    <div class="panel" id="formAsetAlih" hidden>
+      <div class="panel-head">
+        <h2>Butiran Aset Alih</h2>
+        <span class="badge">Aset Alih</span>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Jenis Item</label>
+          <select id="aaItem"></select>
+        </div>
+        <div class="field">
+          <label>Jumlah Bilangan</label>
+          <input type="number" id="aaBilangan" min="1" step="1" placeholder="Contoh: 10">
+        </div>
+        <div class="field">
+          <label>Lokasi Penempatan</label>
+          <input type="text" id="aaLokasi" placeholder="Contoh: Kelas 3 Amanah / Bilik Guru">
+        </div>
+        <div class="field">
+          <label>Justifikasi</label>
+          <select id="aaJustifikasi">
+            <option value="Tambahan">Tambahan</option>
+            <option value="Sedia ada Telah Rosak">Sedia ada Telah Rosak</option>
+            <option value="Belum Ada">Belum Ada</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" data-cancel>Batal</button>
+        <button class="btn btn-primary" id="btnAddAsetAlih">+ Tambah ke Senarai</button>
+      </div>
+    </div>
+
+    <!-- Selenggara entry form -->
+    <div class="panel" id="formSelenggara" hidden>
+      <div class="panel-head">
+        <h2>Butiran Selenggara Kecil</h2>
+        <span class="badge brass">Selenggara Kecil</span>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Jenis Kerosakan</label>
+          <select id="skJenis"></select>
+        </div>
+        <div class="field">
+          <label>Lokasi Spesifik</label>
+          <input type="text" id="skLokasi" placeholder="Contoh: Tandas Blok B, Tingkat 1">
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label>Justifikasi Keperluan</label>
+          <select id="skJustifikasi">
+            <option value="Anai-anai">Anai-anai</option>
+            <option value="Tersumbat">Tersumbat</option>
+            <option value="Rosak (pecah/reput/lekang)">Rosak (pecah/reput/lekang)</option>
+            <option value="Uzur">Uzur</option>
+            <option value="Kerosakan Berulang">Kerosakan Berulang</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" data-cancel>Batal</button>
+        <button class="btn btn-brass" id="btnAddSelenggara">+ Tambah ke Senarai</button>
+      </div>
+    </div>
+
+    <!-- Pending ledger -->
+    <div id="ledgerWrap">
+      <div class="ledger-title">
+        <h2>Senarai Permohonan (Belum Dihantar)</h2>
+        <span id="ledgerCount">0 item</span>
+      </div>
+      <div id="ledgerList"></div>
+    </div>
+
+    <div class="submit-bar" id="submitBar" hidden>
+      <div class="count">Sedia untuk hantar: <b id="submitCount">0</b> item. Permohonan tidak boleh diubah selepas dihantar.</div>
+      <button class="btn btn-primary" id="btnSubmitAll">Hantar Semua Permohonan</button>
+    </div>
+  </section>
+
+  <!-- ===================== CONFIRMATION ===================== -->
+  <section id="view-confirm" hidden>
+    <div class="confirm-box">
+      <div class="confirm-mark">&#10003;</div>
+      <h1>Permohonan Berjaya Dihantar</h1>
+      <p>Permohonan sekolah anda telah direkodkan dan boleh dipantau oleh JPN Kedah. Simpan nombor rujukan ini untuk rekod sekolah.</p>
+      <div class="confirm-ref" id="confirmRef">RUJ-000000</div>
+      <div>
+        <button class="btn btn-primary" id="btnBackToChooser">Buat Permohonan Lain</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ADMIN ===================== -->
+  <section id="view-admin" hidden>
+    <div class="greet">
+      <h1>Papan Pemantauan JPN</h1>
+      <div class="meta" id="adminMeta">—</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="n" id="statTotal">0</div>
+        <div class="l">Jumlah Permohonan</div>
+      </div>
+      <div class="stat-card">
+        <div class="n" id="statAsetAlih">0</div>
+        <div class="l">Permohonan Aset Alih</div>
+      </div>
+      <div class="stat-card brass">
+        <div class="n" id="statSelenggara">0</div>
+        <div class="l">Permohonan Selenggara Kecil</div>
+      </div>
+      <div class="stat-card brass">
+        <div class="n" id="statSekolah">0</div>
+        <div class="l">Sekolah Terlibat</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-admtab="data">Data Permohonan</button>
+      <button class="tab-btn" data-admtab="master">Urus Senarai Item</button>
+    </div>
+
+    <!-- Data tab -->
+    <div id="admTabData">
+      <div class="toolbar">
+        <select id="fltKategori">
+          <option value="">Semua Kategori</option>
+          <option value="AsetAlih">Aset Alih</option>
+          <option value="Selenggara">Selenggara Kecil</option>
+        </select>
+        <select id="fltPPD"><option value="">Semua PPD</option></select>
+        <select id="fltSekolah"><option value="">Semua Sekolah</option></select>
+        <input type="text" id="fltCari" placeholder="Cari item / lokasi…">
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btnExportCsv">Eksport CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tarikh</th><th>Kategori</th><th>Kod Sekolah</th><th>Sekolah</th><th>PPD</th>
+              <th>Item / Kerosakan</th><th>Butiran</th><th>Justifikasi</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="admTableBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="admEmpty" hidden>Tiada permohonan sepadan dengan penapis ini.</div>
+    </div>
+
+    <!-- Master tab -->
+    <div id="admTabMaster" hidden>
+      <div class="grid2">
+        <div>
+          <h3 style="font-size:15px;margin:0 0 10px;">Senarai Item — Aset Alih</h3>
+          <div class="master-list" id="masterAsetAlihList"></div>
+          <div class="add-master-row">
+            <input type="text" id="newAsetAlihItem" placeholder="Tambah item baharu…">
+            <button class="btn btn-ghost" id="btnAddMasterAA">+ Tambah</button>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-size:15px;margin:0 0 10px;">Senarai Jenis — Selenggara Kecil</h3>
+          <div class="master-list" id="masterSelenggaraList"></div>
+          <div class="add-master-row">
+            <input type="text" id="newSelenggaraItem" placeholder="Tambah jenis kerosakan baharu…">
+            <button class="btn btn-ghost" id="btnAddMasterSK">+ Tambah</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="footnote">Sistem Permohonan Aset Alih &amp; Penyelenggaraan · JPN Kedah</p>
+</main>
+
+<script>
+/* =========================================================================
+   KONFIGURASI
+   Tampal URL Web App Apps Script di sini selepas deploy (lihat PANDUAN-DEPLOY.md).
+   Kosongkan (biarkan "") untuk kekal dalam MOD DEMO dengan data contoh.
+   ========================================================================= */
+const CONFIG = {
+  GAS_URL: "" // contoh: "https://script.google.com/macros/s/AKfycb.../exec"
+};
+const DEMO_MODE = !CONFIG.GAS_URL;
+
+/* =========================================================================
+   DATA CONTOH (MOD DEMO SAHAJA)
+   Apabila GAS_URL diisi, semua data ini digantikan dengan data sebenar
+   daripada Google Sheet melalui Apps Script.
+   ========================================================================= */
+const DEMO_SEKOLAH = [
+  { kod:"AAB1023", nama:"SK Alor Setar", ppd:"PPD Kota Setar" },
+  { kod:"AAC2045", nama:"SMK Sungai Petani", ppd:"PPD Kuala Muda" },
+  { kod:"AAD3067", nama:"SK Jitra", ppd:"PPD Kubang Pasu" },
+  { kod:"AAE4089", nama:"SMK Kulim", ppd:"PPD Kulim Bandar Baharu" },
+  { kod:"AAF5012", nama:"SK Baling", ppd:"PPD Baling" }
+];
+const DEMO_ADMIN = [
+  { id:"JPNKEDAH", pw:"admin123", nama:"Sektor S4PD, JPN Kedah" }
+];
+let masterAsetAlih = ["KERUSI MURID","KERUSI GURU","MEJA MURID","MEJA GURU","KERUSI MAKMAL",
+  "KERUSI BENGKEL RBT","KOMPUTER","KIPAS SILING","KIPAS DINDING","PENYAMAN UDARA",
+  "SMART BOARD","PRINTER","KABINET BESI","RAK BUKU"].map(n=>({nama:n,aktif:true}));
+let masterSelenggara = ["BUMBUNG","TANDAS","LANTAI","PINTU","TINGKAP","SILING","ELEKTRIK",
+  "LONGKANG","CAT","TURAP","PAGAR","SISTEM KUMBAHAN"].map(n=>({nama:n,aktif:true}));
+
+let demoPermohonan = [
+  { id:"RUJ-100231", tarikh:"2026-08-14", kategori:"AsetAlih", kodSekolah:"AAB1023", sekolah:"SK Alor Setar", ppd:"PPD Kota Setar", item:"KERUSI MURID", butiran:"25 unit — Kelas 4 Bestari", justifikasi:"Sedia ada Telah Rosak", status:"Baru" },
+  { id:"RUJ-100232", tarikh:"2026-08-14", kategori:"Selenggara", kodSekolah:"AAB1023", sekolah:"SK Alor Setar", ppd:"PPD Kota Setar", item:"BUMBUNG", butiran:"Blok A, atas Bilik Sains", justifikasi:"Tersumbat", status:"Dalam Tindakan" },
+  { id:"RUJ-100255", tarikh:"2026-08-20", kategori:"AsetAlih", kodSekolah:"AAC2045", sekolah:"SMK Sungai Petani", ppd:"PPD Kuala Muda", item:"PENYAMAN UDARA", butiran:"2 unit — Bilik Guru", justifikasi:"Belum Ada", status:"Baru" },
+  { id:"RUJ-100301", tarikh:"2026-08-27", kategori:"Selenggara", kodSekolah:"AAD3067", sekolah:"SK Jitra", ppd:"PPD Kubang Pasu", item:"ELEKTRIK", butiran:"Dewan utama", justifikasi:"Rosak (pecah/reput/lekang)", status:"Selesai" },
+  { id:"RUJ-100340", tarikh:"2026-09-01", kategori:"AsetAlih", kodSekolah:"AAF5012", sekolah:"SK Baling", ppd:"PPD Baling", item:"SMART BOARD", butiran:"1 unit — Kelas 6 Cemerlang", justifikasi:"Tambahan", status:"Baru" }
+];
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+let state = {
+  role:null,          // 'sekolah' | 'admin'
+  user:null,          // {kod,nama,ppd} atau {id,nama}
+  pending:[],         // entry belum dihantar (sesi semasa)
+  activeCat:null
+};
+
+/* =========================================================================
+   HELPER — panggilan ke backend (demo lokal atau Apps Script JSONP)
+   ========================================================================= */
+function gasCall(action, params){
+  if(DEMO_MODE) return demoHandler(action, params);
+  return new Promise((resolve,reject)=>{
+    const cbName = "cb_" + Date.now() + "_" + Math.floor(Math.random()*10000);
+    window[cbName] = (data)=>{ resolve(data); delete window[cbName]; script.remove(); };
+    const qs = new URLSearchParams({...params, action, callback:cbName}).toString();
+    const script = document.createElement("script");
+    script.src = CONFIG.GAS_URL + "?" + qs;
+    script.onerror = ()=>{ reject(new Error("Gagal hubungi server")); delete window[cbName]; };
+    document.body.appendChild(script);
+  });
+}
+
+function demoHandler(action, p){
+  return new Promise((resolve)=>{
+    setTimeout(()=>{
+      switch(action){
+        case "loginSekolah": {
+          const s = DEMO_SEKOLAH.find(x=>x.kod.toUpperCase()===p.id.toUpperCase());
+          if(s && p.pw.toUpperCase()===s.kod.toUpperCase()) resolve({ok:true,user:s});
+          else resolve({ok:false,msg:"Kod Sekolah atau kata laluan tidak sah."});
+          break;
+        }
+        case "loginAdmin": {
+          const a = DEMO_ADMIN.find(x=>x.id.toUpperCase()===p.id.toUpperCase() && x.pw===p.pw);
+          if(a) resolve({ok:true,user:{id:a.id,nama:a.nama}});
+          else resolve({ok:false,msg:"ID atau kata laluan admin tidak sah."});
+          break;
+        }
+        case "getMasterAsetAlih": resolve(masterAsetAlih.filter(i=>i.aktif).map(i=>i.nama)); break;
+        case "getMasterSelenggara": resolve(masterSelenggara.filter(i=>i.aktif).map(i=>i.nama)); break;
+        case "submitEntries": {
+          const batchRef = "RUJ-" + Date.now().toString().slice(-8);
+          p.entries.forEach((e,i)=>{
+            demoPermohonan.push({
+              id: batchRef + "-" + (i+1),
+              tarikh:new Date().toISOString().slice(0,10),
+              kategori:e.kategori, kodSekolah:state.user.kod, sekolah:state.user.nama, ppd:state.user.ppd,
+              item:e.item, butiran:e.butiran, justifikasi:e.justifikasi, status:"Baru"
+            });
+          });
+          resolve({ok:true, ref:batchRef});
+          break;
+        }
+        case "adminGetPermohonan": resolve(demoPermohonan); break;
+        case "adminSetStatus": {
+          const rec = demoPermohonan.find(x=>x.id===p.id);
+          if(rec) rec.status = p.status;
+          resolve({ok:true});
+          break;
+        }
+        case "adminGetMaster": resolve({asetAlih:masterAsetAlih, selenggara:masterSelenggara}); break;
+        case "adminToggleMaster": {
+          const list = p.jenis==="AsetAlih" ? masterAsetAlih : masterSelenggara;
+          const it = list.find(x=>x.nama===p.nama);
+          if(it) it.aktif = p.aktif;
+          resolve({ok:true});
+          break;
+        }
+        case "adminAddMaster": {
+          const list = p.jenis==="AsetAlih" ? masterAsetAlih : masterSelenggara;
+          if(p.nama && !list.some(x=>x.nama.toUpperCase()===p.nama.toUpperCase())) list.push({nama:p.nama.toUpperCase(),aktif:true});
+          resolve({ok:true});
+          break;
+        }
+        default: resolve({ok:false,msg:"Tindakan tidak dikenali."});
+      }
+    }, 180);
+  });
+}
+
+/* =========================================================================
+   DOM refs
+   ========================================================================= */
+const $ = (sel)=>document.querySelector(sel);
+const views = {
+  login: $("#view-login"), sekolah: $("#view-sekolah"), confirm: $("#view-confirm"), admin: $("#view-admin")
+};
+function showView(name){
+  Object.values(views).forEach(v=>v.hidden = true);
+  views[name].hidden = false;
+}
+
+/* =========================================================================
+   LOGIN
+   ========================================================================= */
+let loginRole = "sekolah";
+document.querySelectorAll(".login-tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".login-tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    loginRole = tab.dataset.role;
+    $("#loginError").innerHTML = "";
+    if(loginRole==="sekolah"){
+      $("#loginTitle").textContent = "Portal Sekolah";
+      $("#loginLead").textContent = "Gunakan Kod Sekolah sebagai ID dan Kata Laluan.";
+      $("#labelId").textContent = "Kod Sekolah";
+      $("#labelPw").textContent = "Kata Laluan";
+      $("#inputId").placeholder = "Contoh: AAB1023";
+      $("#inputPw").placeholder = "Kod Sekolah anda";
+      $("#demoNote").innerHTML = DEMO_MODE ? "Mod demo — cuba <b>AAB1023</b> / <b>AAB1023</b>." : "";
+    } else {
+      $("#loginTitle").textContent = "Portal Admin JPN";
+      $("#loginLead").textContent = "Log masuk menggunakan ID JPN yang didaftarkan.";
+      $("#labelId").textContent = "ID JPN";
+      $("#labelPw").textContent = "Kata Laluan";
+      $("#inputId").placeholder = "Contoh: JPNKEDAH";
+      $("#inputPw").placeholder = "Kata laluan admin";
+      $("#demoNote").innerHTML = DEMO_MODE ? "Mod demo — cuba <b>JPNKEDAH</b> / <b>admin123</b>." : "";
+    }
+  });
+});
+document.querySelector('.login-tab[data-role="sekolah"]').click();
+
+$("#btnLogin").addEventListener("click", async ()=>{
+  const id = $("#inputId").value.trim();
+  const pw = $("#inputPw").value.trim();
+  $("#loginError").innerHTML = "";
+  if(!id || !pw){
+    $("#loginError").innerHTML = '<div class="error-msg">Sila isi ID dan kata laluan.</div>';
+    return;
+  }
+  $("#btnLogin").disabled = true; $("#btnLogin").textContent = "Menyemak…";
+  const res = await gasCall(loginRole==="sekolah" ? "loginSekolah" : "loginAdmin", {id, pw});
+  $("#btnLogin").disabled = false; $("#btnLogin").textContent = "Log Masuk";
+  if(!res.ok){
+    $("#loginError").innerHTML = `<div class="error-msg">${res.msg}</div>`;
+    return;
+  }
+  state.role = loginRole;
+  state.user = res.user;
+  $("#whoBar").hidden = false;
+  if(loginRole==="sekolah"){
+    $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> · ${res.user.ppd}`;
+    $("#sekolahName").textContent = res.user.nama;
+    $("#sekolahMeta").textContent = `Kod Sekolah: ${res.user.kod} · ${res.user.ppd}`;
+    resetSekolahView();
+    await loadMasterLists();
+    showView("sekolah");
+  } else {
+    $("#whoLabel").innerHTML = `<b>${res.user.nama}</b>`;
+    $("#adminMeta").textContent = res.user.nama;
+    showView("admin");
+    await initAdmin();
+  }
+});
+
+$("#btnLogout").addEventListener("click", ()=>{
+  state = {role:null,user:null,pending:[],activeCat:null};
+  $("#whoBar").hidden = true;
+  $("#inputId").value = ""; $("#inputPw").value = "";
+  showView("login");
+});
+
+/* =========================================================================
+   SEKOLAH — pilih kategori & tambah entri
+   ========================================================================= */
+function resetSekolahView(){
+  state.pending = [];
+  state.activeCat = null;
+  $("#sekolahChooser").hidden = false;
+  $("#formAsetAlih").hidden = true;
+  $("#formSelenggara").hidden = true;
+  renderLedger();
+}
+
+async function loadMasterLists(){
+  const aa = await gasCall("getMasterAsetAlih", {});
+  const sk = await gasCall("getMasterSelenggara", {});
+  $("#aaItem").innerHTML = aa.map(i=>`<option value="${i}">${i}</option>`).join("");
+  $("#skJenis").innerHTML = sk.map(i=>`<option value="${i}">${i}</option>`).join("");
+}
+
+document.querySelectorAll("[data-cat]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const cat = btn.dataset.cat;
+    state.activeCat = cat;
+    $("#formAsetAlih").hidden = cat!=="AsetAlih";
+    $("#formSelenggara").hidden = cat!=="Selenggara";
+    document.querySelector(cat==="AsetAlih" ? "#formAsetAlih" : "#formSelenggara").scrollIntoView({behavior:"smooth",block:"start"});
+  });
+});
+document.querySelectorAll("[data-cancel]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    $("#formAsetAlih").hidden = true;
+    $("#formSelenggara").hidden = true;
+  });
+});
+
+$("#btnAddAsetAlih").addEventListener("click", ()=>{
+  const item = $("#aaItem").value;
+  const bilangan = $("#aaBilangan").value.trim();
+  const lokasi = $("#aaLokasi").value.trim();
+  const justifikasi = $("#aaJustifikasi").value;
+  if(!bilangan || !lokasi){ alert("Sila isi Jumlah Bilangan dan Lokasi Penempatan."); return; }
+  state.pending.push({
+    kategori:"AsetAlih", item, justifikasi,
+    butiran:`${bilangan} unit — ${lokasi}`,
+    display:{item, line1:`${bilangan} unit di ${lokasi}`, line2:justifikasi}
+  });
+  $("#aaBilangan").value = ""; $("#aaLokasi").value = "";
+  renderLedger();
+});
+
+$("#btnAddSelenggara").addEventListener("click", ()=>{
+  const item = $("#skJenis").value;
+  const lokasi = $("#skLokasi").value.trim();
+  const justifikasi = $("#skJustifikasi").value;
+  if(!lokasi){ alert("Sila isi Lokasi Spesifik."); return; }
+  state.pending.push({
+    kategori:"Selenggara", item, justifikasi,
+    butiran:lokasi,
+    display:{item, line1:lokasi, line2:justifikasi}
+  });
+  $("#skLokasi").value = "";
+  renderLedger();
+});
+
+function renderLedger(){
+  const list = $("#ledgerList");
+  $("#ledgerCount").textContent = state.pending.length + " item";
+  $("#submitCount").textContent = state.pending.length;
+  $("#submitBar").hidden = state.pending.length===0;
+  if(state.pending.length===0){
+    list.innerHTML = '<div class="ledger-empty">Belum ada permohonan ditambah. Pilih Aset Alih atau Selenggara Kecil di atas untuk mula.</div>';
+    return;
+  }
+  list.innerHTML = state.pending.map((e,idx)=>`
+    <div class="ledger-item ${e.kategori==="Selenggara"?"selenggara":""}">
+      <div class="ledger-num">${idx+1}</div>
+      <div class="ledger-body">
+        <div class="li-title">${e.display.item} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">— ${e.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil"}</span></div>
+        <div class="li-meta">${e.display.line1} · ${e.display.line2}</div>
+      </div>
+      <button class="ledger-remove" data-idx="${idx}" title="Buang">&times;</button>
+    </div>
+  `).join("");
+  list.querySelectorAll(".ledger-remove").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      state.pending.splice(Number(b.dataset.idx),1);
+      renderLedger();
+    });
+  });
+}
+
+$("#btnSubmitAll").addEventListener("click", async ()=>{
+  if(state.pending.length===0) return;
+  if(!confirm(`Hantar ${state.pending.length} permohonan? Senarai ini tidak boleh diubah selepas dihantar.`)) return;
+  $("#btnSubmitAll").disabled = true; $("#btnSubmitAll").textContent = "Menghantar…";
+  const res = await gasCall("submitEntries", {
+    kodSekolah: state.user.kod,
+    entries: state.pending.map(e=>({kategori:e.kategori,item:e.item,butiran:e.butiran,justifikasi:e.justifikasi}))
+  });
+  $("#btnSubmitAll").disabled = false; $("#btnSubmitAll").textContent = "Hantar Semua Permohonan";
+  if(res.ok){
+    $("#confirmRef").textContent = res.ref;
+    showView("confirm");
+  } else {
+    alert(res.msg || "Gagal menghantar permohonan. Sila cuba lagi.");
+  }
+});
+
+$("#btnBackToChooser").addEventListener("click", ()=>{
+  resetSekolahView();
+  showView("sekolah");
+});
+
+/* =========================================================================
+   ADMIN
+   ========================================================================= */
+let admData = [];
+let admMaster = {asetAlih:[], selenggara:[]};
+
+document.querySelectorAll(".tab-btn").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    $("#admTabData").hidden = t.dataset.admtab!=="data";
+    $("#admTabMaster").hidden = t.dataset.admtab!=="master";
+  });
+});
+
+async function initAdmin(){
+  admData = await gasCall("adminGetPermohonan", {});
+  renderAdminStats();
+  populateAdminFilters();
+  renderAdminTable();
+  const m = await gasCall("adminGetMaster", {});
+  admMaster = {asetAlih:m.asetAlih, selenggara:m.selenggara};
+  renderMasterLists();
+}
+
+function renderAdminStats(){
+  $("#statTotal").textContent = admData.length;
+  $("#statAsetAlih").textContent = admData.filter(d=>d.kategori==="AsetAlih").length;
+  $("#statSelenggara").textContent = admData.filter(d=>d.kategori==="Selenggara").length;
+  $("#statSekolah").textContent = new Set(admData.map(d=>d.kodSekolah)).size;
+}
+
+function populateAdminFilters(){
+  const ppds = [...new Set(admData.map(d=>d.ppd))].sort();
+  const sekolahs = [...new Set(admData.map(d=>d.sekolah))].sort();
+  $("#fltPPD").innerHTML = '<option value="">Semua PPD</option>' + ppds.map(p=>`<option value="${p}">${p}</option>`).join("");
+  $("#fltSekolah").innerHTML = '<option value="">Semua Sekolah</option>' + sekolahs.map(s=>`<option value="${s}">${s}</option>`).join("");
+}
+
+function currentFilters(){
+  return {
+    kategori: $("#fltKategori").value,
+    ppd: $("#fltPPD").value,
+    sekolah: $("#fltSekolah").value,
+    cari: $("#fltCari").value.trim().toLowerCase()
+  };
+}
+
+function filteredData(){
+  const f = currentFilters();
+  return admData.filter(d=>{
+    if(f.kategori && d.kategori!==f.kategori) return false;
+    if(f.ppd && d.ppd!==f.ppd) return false;
+    if(f.sekolah && d.sekolah!==f.sekolah) return false;
+    if(f.cari && !(d.item.toLowerCase().includes(f.cari) || d.butiran.toLowerCase().includes(f.cari))) return false;
+    return true;
+  });
+}
+
+function statusClass(s){
+  if(s==="Selesai") return "status-selesai";
+  if(s==="Dalam Tindakan") return "status-tindakan";
+  return "status-baru";
+}
+
+function renderAdminTable(){
+  const rows = filteredData();
+  const body = $("#admTableBody");
+  $("#admEmpty").hidden = rows.length>0;
+  body.innerHTML = rows.map(d=>`
+    <tr>
+      <td>${d.tarikh}</td>
+      <td>${d.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil"}</td>
+      <td>${d.kodSekolah}</td>
+      <td>${d.sekolah}</td>
+      <td>${d.ppd}</td>
+      <td>${d.item}</td>
+      <td>${d.butiran}</td>
+      <td>${d.justifikasi}</td>
+      <td>
+        <select class="status-select" data-id="${d.id}">
+          <option ${d.status==="Baru"?"selected":""}>Baru</option>
+          <option ${d.status==="Dalam Tindakan"?"selected":""}>Dalam Tindakan</option>
+          <option ${d.status==="Selesai"?"selected":""}>Selesai</option>
+        </select>
+      </td>
+    </tr>
+  `).join("");
+  body.querySelectorAll(".status-select").forEach(sel=>{
+    sel.addEventListener("change", async ()=>{
+      await gasCall("adminSetStatus", {id:sel.dataset.id, status:sel.value});
+      const rec = admData.find(x=>x.id===sel.dataset.id);
+      if(rec) rec.status = sel.value;
+    });
+  });
+}
+["fltKategori","fltPPD","fltSekolah"].forEach(id=>$("#"+id).addEventListener("change", renderAdminTable));
+$("#fltCari").addEventListener("input", renderAdminTable);
+
+$("#btnExportCsv").addEventListener("click", ()=>{
+  const rows = filteredData();
+  const header = ["Tarikh","Kategori","Kod Sekolah","Sekolah","PPD","Item/Kerosakan","Butiran","Justifikasi","Status"];
+  const csv = [header.join(",")].concat(rows.map(d=>[
+    d.tarikh, d.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil", d.kodSekolah, `"${d.sekolah}"`,
+    `"${d.ppd}"`, `"${d.item}"`, `"${d.butiran}"`, `"${d.justifikasi}"`, d.status
+  ].join(","))).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "permohonan-aset-selenggara.csv";
+  a.click();
+});
+
+function renderMasterLists(){
+  $("#masterAsetAlihList").innerHTML = admMaster.asetAlih.map(i=>`
+    <div class="master-row ${i.aktif?"":"inactive"}">
+      <span class="nm">${i.nama}</span>
+      <label class="switch">
+        <input type="checkbox" data-jenis="AsetAlih" data-nama="${i.nama}" ${i.aktif?"checked":""}>
+        <span class="slider"></span>
+      </label>
+    </div>`).join("");
+  $("#masterSelenggaraList").innerHTML = admMaster.selenggara.map(i=>`
+    <div class="master-row ${i.aktif?"":"inactive"}">
+      <span class="nm">${i.nama}</span>
+      <label class="switch">
+        <input type="checkbox" data-jenis="Selenggara" data-nama="${i.nama}" ${i.aktif?"checked":""}>
+        <span class="slider"></span>
+      </label>
+    </div>`).join("");
+  document.querySelectorAll(".master-row input[type=checkbox]").forEach(cb=>{
+    cb.addEventListener("change", async ()=>{
+      await gasCall("adminToggleMaster", {jenis:cb.dataset.jenis, nama:cb.dataset.nama, aktif:cb.checked});
+      cb.closest(".master-row").classList.toggle("inactive", !cb.checked);
+    });
+  });
+}
+
+$("#btnAddMasterAA").addEventListener("click", async ()=>{
+  const v = $("#newAsetAlihItem").value.trim();
+  if(!v) return;
+  await gasCall("adminAddMaster", {jenis:"AsetAlih", nama:v});
+  admMaster.asetAlih.push({nama:v.toUpperCase(), aktif:true});
+  $("#newAsetAlihItem").value = "";
+  renderMasterLists();
+});
+$("#btnAddMasterSK").addEventListener("click", async ()=>{
+  const v = $("#newSelenggaraItem").value.trim();
+  if(!v) return;
+  await gasCall("adminAddMaster", {jenis:"Selenggara", nama:v});
+  admMaster.selenggara.push({nama:v.toUpperCase(), aktif:true});
+  $("#newSelenggaraItem").value = "";
+  renderMasterLists();
+});
+
+/* init */
+showView("login");
+document.querySelector('.login-tab[data-role="sekolah"]').click();
+</script>
+</body>
+</html>
