@@ -584,7 +584,15 @@ function gasCall(action, params){
   return new Promise((resolve,reject)=>{
     const cbName = "cb_" + Date.now() + "_" + Math.floor(Math.random()*10000);
     window[cbName] = (data)=>{ resolve(data); delete window[cbName]; script.remove(); };
-    const qs = new URLSearchParams({...params, action, callback:cbName}).toString();
+    // Parameter jenis array/objek (cth: senarai entries) mesti dihantar sebagai
+    // teks JSON dalam URL — kalau tidak, URLSearchParams tukar jadi "[object Object]"
+    // yang tak sah bila cuba di-JSON.parse() di bahagian pelayan.
+    const serialized = {};
+    Object.keys(params).forEach(k=>{
+      const v = params[k];
+      serialized[k] = (v !== null && typeof v === "object") ? JSON.stringify(v) : v;
+    });
+    const qs = new URLSearchParams({...serialized, action, callback:cbName}).toString();
     const script = document.createElement("script");
     script.src = CONFIG.GAS_URL + "?" + qs;
     script.onerror = ()=>{ reject(new Error("Gagal hubungi server")); delete window[cbName]; };
