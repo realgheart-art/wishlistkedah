@@ -202,6 +202,10 @@
   table.data-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
   table.data-table tr:hover td{background:#FBFAF7;}
   .status-select{border:1px solid var(--border);border-radius:3px;font-size:12px;padding:3px 6px;background:#fff;}
+  .status-pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;}
+  .status-pill-baru{background:var(--brass-tint);color:#8a6508;}
+  .status-pill-tindakan{background:var(--navy-tint);color:var(--navy);}
+  .status-pill-selesai{background:var(--success-bg);color:var(--success);}
   .status-banner{
     display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:3px; font-size:13.5px; margin-top:6px;
   }
@@ -329,6 +333,10 @@
             <option value="Belum Ada">Belum Ada</option>
           </select>
         </div>
+        <div class="field" id="aaItemLainWrap" style="grid-column:1/-1;" hidden>
+          <label>Nyatakan Item Lain</label>
+          <input type="text" id="aaItemLain" placeholder="Cth: PAPAN KENYATAAN">
+        </div>
       </div>
       <div class="form-actions">
         <button class="btn btn-ghost" data-cancel>Batal</button>
@@ -350,6 +358,10 @@
             <option value="Uzur">Uzur</option>
             <option value="Kerosakan Berulang">Kerosakan Berulang</option>
           </select>
+        </div>
+        <div class="field" id="skJenisLainWrap" style="grid-column:1/-1;" hidden>
+          <label>Nyatakan Jenis Kerosakan Lain</label>
+          <input type="text" id="skJenisLain" placeholder="Cth: SISTEM PENYAMAN UDARA PUSAT">
         </div>
       </div>
       <div class="form-actions">
@@ -521,7 +533,7 @@
 /* =========================================================================
    KONFIGURASI
    ========================================================================= */
-const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycbw9xO6Unkoz98yGPi0Qy_8GKXKrIyP9ujVqPQT6TRGS1BdUIuSxado1oeZzN_x5yrM3/exec" };
+const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycby74mPlAdv2vebVlRpEuQwu6zQ0SFyQ7LZP9ikn2GK7iBq_bk9hD_6ntACs2N8oK8AT/exec" };
 const DEMO_MODE = !CONFIG.GAS_URL;
 
 /* =========================================================================
@@ -535,14 +547,15 @@ const DEMO_SEKOLAH = [
   { kod:"AAF5012", nama:"SK Baling", ppd:"PPD Baling" }
 ];
 const DEMO_ADMIN = [
-  { id:"JPNKEDAH", pw:"admin123", nama:"Sektor S4PD, JPN Kedah", peranan:"Pentadbir" },
-  { id:"PENYEMAK1", pw:"semak123", nama:"Pegawai Penyemak PPD", peranan:"Penyemak" }
+  { id:"JPNKEDAH", pw:"admin123", nama:"Sektor S4PD, JPN Kedah", peranan:"Pentadbir", ppd:"" },
+  { id:"PENYEMAK1", pw:"semak123", nama:"Pegawai Penyemak, JPN Kedah", peranan:"Penyemak", ppd:"" },
+  { id:"PPDKOTASETAR", pw:"ppd123", nama:"PPD Kota Setar", peranan:"Admin PPD", ppd:"PPD Kota Setar" }
 ];
 let masterAsetAlih = ["KERUSI MURID","KERUSI GURU","MEJA MURID","MEJA GURU","KERUSI MAKMAL",
   "KERUSI BENGKEL RBT","KOMPUTER","KIPAS SILING","KIPAS DINDING","PENYAMAN UDARA",
-  "SMART BOARD","PRINTER","KABINET BESI","RAK BUKU"].map(n=>({nama:n,aktif:true}));
+  "SMART BOARD","PRINTER","KABINET BESI","RAK BUKU","LAIN-LAIN"].map(n=>({nama:n,aktif:true}));
 let masterSelenggara = ["BUMBUNG","TANDAS","LANTAI","PINTU","TINGKAP","SILING","ELEKTRIK",
-  "LONGKANG","CAT","TURAP","PAGAR","SISTEM KUMBAHAN"].map(n=>({nama:n,aktif:true}));
+  "LONGKANG","CAT","TURAP","PAGAR","SISTEM KUMBAHAN","LAIN-LAIN"].map(n=>({nama:n,aktif:true}));
 
 let demoPermohonan = [
   { id:"RUJ-100231-1", tarikh:"2026-08-14", kategori:"AsetAlih", kodSekolah:"AAB1023", sekolah:"SK Alor Setar", ppd:"PPD Kota Setar", item:"KERUSI MURID", bilangan:25, lokasi:"Kelas 4 Bestari", justifikasi:"Sedia ada Telah Rosak", status:"Baru" },
@@ -591,7 +604,7 @@ function demoHandler(action, p){
         }
         case "loginAdmin": {
           const a = DEMO_ADMIN.find(x=>x.id.toUpperCase()===p.id.toUpperCase() && x.pw===p.pw);
-          if(a) resolve({ok:true,user:{id:a.id,nama:a.nama,peranan:a.peranan}});
+          if(a) resolve({ok:true,user:{id:a.id,nama:a.nama,peranan:a.peranan,ppd:a.ppd||""}});
           else resolve({ok:false,msg:"ID atau kata laluan admin tidak sah."});
           break;
         }
@@ -605,6 +618,10 @@ function demoHandler(action, p){
         }
         case "getSekolahPermohonan": {
           resolve(demoPermohonan.filter(d=>d.kodSekolah.toUpperCase()===String(p.kodSekolah).toUpperCase()));
+          break;
+        }
+        case "ppdGetPermohonan": {
+          resolve(demoPermohonan.filter(d=>d.ppd.toUpperCase()===String(p.ppd).toUpperCase()));
           break;
         }
         case "sekolahUpdateEntry": {
@@ -702,7 +719,7 @@ document.querySelectorAll(".login-tab").forEach(tab=>{
       $("#labelPw").textContent = "Kata Laluan";
       $("#inputId").placeholder = "Contoh: JPNKEDAH";
       $("#inputPw").placeholder = "Kata laluan admin";
-      $("#demoNote").innerHTML = DEMO_MODE ? "Mod demo — cuba <b>JPNKEDAH</b> / <b>admin123</b> (Pentadbir) atau <b>PENYEMAK1</b> / <b>semak123</b> (Penyemak)." : "";
+      $("#demoNote").innerHTML = DEMO_MODE ? "Mod demo — cuba <b>JPNKEDAH</b> / <b>admin123</b> (Pentadbir), <b>PENYEMAK1</b> / <b>semak123</b> (Penyemak), atau <b>PPDKOTASETAR</b> / <b>ppd123</b> (Admin PPD)." : "";
     }
   });
 });
@@ -731,9 +748,11 @@ $("#btnLogin").addEventListener("click", async ()=>{
     applyEditTextState();
     showView("sekolah");
   } else {
-    $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> <span class="role-tag">${res.user.peranan}</span>`;
-    $("#adminMeta").textContent = res.user.nama + " · " + res.user.peranan;
-    $("#tabMasterBtn").style.display = res.user.peranan === "Penyemak" ? "none" : "";
+    const roleLabel = res.user.peranan + (res.user.ppd ? " · " + res.user.ppd : "");
+    $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> <span class="role-tag">${roleLabel}</span>`;
+    $("#adminMeta").textContent = res.user.nama + " · " + roleLabel;
+    $("#tabMasterBtn").style.display = res.user.peranan === "Pentadbir" ? "" : "none";
+    $("#fltPPD").hidden = res.user.peranan === "Admin PPD";
     document.querySelector('.tab-btn[data-admtab="data"]').click();
     showView("admin");
     await initAdmin();
@@ -789,25 +808,42 @@ document.querySelectorAll("[data-cat]").forEach(btn=>{
   });
 });
 document.querySelectorAll("[data-cancel]").forEach(btn=>{
-  btn.addEventListener("click", ()=>{ $("#formAsetAlih").hidden = true; $("#formSelenggara").hidden = true; });
+  btn.addEventListener("click", ()=>{
+    $("#formAsetAlih").hidden = true; $("#formSelenggara").hidden = true;
+    $("#aaItemLainWrap").hidden = true; $("#skJenisLainWrap").hidden = true;
+  });
 });
+$("#aaItem").addEventListener("change", ()=>{
+  $("#aaItemLainWrap").hidden = $("#aaItem").value !== "LAIN-LAIN";
+});
+$("#skJenis").addEventListener("change", ()=>{
+  $("#skJenisLainWrap").hidden = $("#skJenis").value !== "LAIN-LAIN";
+});
+/** Kalau pilihan "LAIN-LAIN", pulangkan teks tersuai (huruf besar); null jika kosong. */
+function resolveItemValue(selectVal, customVal){
+  if(selectVal !== "LAIN-LAIN") return selectVal;
+  const custom = customVal.trim().toUpperCase();
+  return custom || null;
+}
 $("#btnAddAsetAlih").addEventListener("click", ()=>{
-  const item = $("#aaItem").value;
   const bilangan = $("#aaBilangan").value.trim();
   const lokasi = $("#aaLokasi").value.trim();
   const justifikasi = $("#aaJustifikasi").value;
+  const item = resolveItemValue($("#aaItem").value, $("#aaItemLain").value);
+  if(item === null){ alert("Sila nyatakan item lain."); return; }
   if(!bilangan || !lokasi){ alert("Sila isi Jumlah Bilangan dan Lokasi Penempatan."); return; }
   state.pending.push({ kategori:"AsetAlih", item, bilangan, lokasi, justifikasi });
-  $("#aaBilangan").value = ""; $("#aaLokasi").value = "";
+  $("#aaBilangan").value = ""; $("#aaLokasi").value = ""; $("#aaItemLain").value = ""; $("#aaItemLainWrap").hidden = true;
   renderLedger();
 });
 $("#btnAddSelenggara").addEventListener("click", ()=>{
-  const item = $("#skJenis").value;
   const lokasi = $("#skLokasi").value.trim();
   const justifikasi = $("#skJustifikasi").value;
+  const item = resolveItemValue($("#skJenis").value, $("#skJenisLain").value);
+  if(item === null){ alert("Sila nyatakan jenis kerosakan lain."); return; }
   if(!lokasi){ alert("Sila isi Lokasi Spesifik."); return; }
   state.pending.push({ kategori:"Selenggara", item, lokasi, justifikasi });
-  $("#skLokasi").value = "";
+  $("#skLokasi").value = ""; $("#skJenisLain").value = ""; $("#skJenisLainWrap").hidden = true;
   renderLedger();
 });
 function renderLedger(){
@@ -925,6 +961,9 @@ function renderMySubList(rows){
           <input type="text" class="edit-lokasi" value="${d.lokasi}" style="width:180px;">
           <select class="edit-justifikasi">${mySubJustifikasiOptions(d.kategori, d.justifikasi)}</select>
         </div>
+        <div class="li-edit-fields">
+          <input type="text" class="edit-item-lain" placeholder="Nyatakan item lain" style="width:100%;" hidden>
+        </div>
       </div>
       <div class="li-actions">
         <button class="btn-ghost-sm" data-mysub-save data-id="${d.id}" data-kategori="${d.kategori}">Simpan</button>
@@ -939,15 +978,21 @@ function renderMySubList(rows){
   list.querySelectorAll("[data-mysub-cancel]").forEach(b=>{
     b.addEventListener("click", async ()=>{ mySubEditingId = null; await refreshMySubmissions(); });
   });
+  list.querySelectorAll(".edit-item").forEach(sel=>{
+    sel.addEventListener("change", ()=>{
+      sel.closest(".ledger-body").querySelector(".edit-item-lain").hidden = sel.value !== "LAIN-LAIN";
+    });
+  });
   list.querySelectorAll("[data-mysub-save]").forEach(b=>{
     b.addEventListener("click", async ()=>{
       const id = b.dataset.id;
       const kategori = b.dataset.kategori;
       const row = list.querySelector(`[data-row-id="${CSS.escape(id)}"]`);
-      const item = row.querySelector(".edit-item").value;
+      const item = resolveItemValue(row.querySelector(".edit-item").value, row.querySelector(".edit-item-lain").value);
       const bilangan = kategori==="AsetAlih" ? row.querySelector(".edit-bilangan").value.trim() : "";
       const lokasi = row.querySelector(".edit-lokasi").value.trim();
       const justifikasi = row.querySelector(".edit-justifikasi").value;
+      if(item === null){ alert("Sila nyatakan item lain."); return; }
       if(!lokasi || (kategori==="AsetAlih" && !bilangan)){ alert("Sila lengkapkan semua medan."); return; }
       b.disabled = true; b.textContent = "Menyimpan…";
       const res = await gasCall("sekolahUpdateEntry", { id, kategori, kodSekolah: state.user.kod, item, bilangan, lokasi, justifikasi });
@@ -982,7 +1027,9 @@ document.querySelectorAll(".tab-btn").forEach(t=>{
 });
 
 async function initAdmin(){
-  admData = await gasCall("adminGetPermohonan", {});
+  admData = state.user.peranan === "Admin PPD"
+    ? await gasCall("ppdGetPermohonan", { ppd: state.user.ppd })
+    : await gasCall("adminGetPermohonan", {});
   renderAdminStats();
   populateAdminFilters();
   renderAdminTable();
@@ -1060,6 +1107,7 @@ function buildJustifikasiOptions(kategori, current){
 }
 
 function rowViewHtml(d){
+  const readOnly = state.user.peranan === "Admin PPD";
   return `<tr data-row-id="${d.id}">
     <td>${d.tarikh}</td>
     <td>${d.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil"}</td>
@@ -1070,14 +1118,20 @@ function rowViewHtml(d){
     <td>${displayButiran(d)}</td>
     <td>${d.justifikasi}</td>
     <td>
+      ${readOnly ? `<span class="status-pill ${statusPillClass(d.status)}">${d.status}</span>` : `
       <select class="status-select" data-id="${d.id}">
         <option ${d.status==="Baru"?"selected":""}>Baru</option>
         <option ${d.status==="Dalam Tindakan"?"selected":""}>Dalam Tindakan</option>
         <option ${d.status==="Selesai"?"selected":""}>Selesai</option>
-      </select>
+      </select>`}
     </td>
-    <td><button class="btn-ghost-sm" data-edit-btn data-id="${d.id}">Edit</button></td>
+    <td>${readOnly ? "" : `<button class="btn-ghost-sm" data-edit-btn data-id="${d.id}">Edit</button>`}</td>
   </tr>`;
+}
+function statusPillClass(status){
+  if(status==="Selesai") return "status-pill-selesai";
+  if(status==="Dalam Tindakan") return "status-pill-tindakan";
+  return "status-pill-baru";
 }
 function rowEditHtml(d){
   const itemOpts = buildItemOptions(d.kategori, d.item);
@@ -1088,7 +1142,10 @@ function rowEditHtml(d){
     <td>${d.kodSekolah}</td>
     <td>${d.sekolah}</td>
     <td>${d.ppd}</td>
-    <td><select class="edit-item">${itemOpts}</select></td>
+    <td>
+      <select class="edit-item">${itemOpts}</select>
+      <input type="text" class="edit-item-lain" placeholder="Nyatakan item lain" style="margin-top:4px;width:100%;" hidden>
+    </td>
     <td>
       ${d.kategori==="AsetAlih" ? `<input type="number" class="edit-bilangan" value="${d.bilangan}" min="1"> unit —<br>` : ""}
       <input type="text" class="edit-lokasi" value="${d.lokasi}">
@@ -1120,15 +1177,21 @@ function renderAdminTable(){
   body.querySelectorAll("[data-cancel-edit]").forEach(btn=>{
     btn.addEventListener("click", ()=>{ editingId = null; renderAdminTable(); });
   });
+  body.querySelectorAll(".edit-item").forEach(sel=>{
+    sel.addEventListener("change", ()=>{
+      sel.closest("td").querySelector(".edit-item-lain").hidden = sel.value !== "LAIN-LAIN";
+    });
+  });
   body.querySelectorAll("[data-save-edit]").forEach(btn=>{
     btn.addEventListener("click", async ()=>{
       const id = btn.dataset.id;
       const kategori = btn.dataset.kategori;
       const row = body.querySelector(`tr[data-row-id="${CSS.escape(id)}"]`);
-      const item = row.querySelector(".edit-item").value;
+      const item = resolveItemValue(row.querySelector(".edit-item").value, row.querySelector(".edit-item-lain").value);
       const bilangan = kategori==="AsetAlih" ? row.querySelector(".edit-bilangan").value.trim() : "";
       const lokasi = row.querySelector(".edit-lokasi").value.trim();
       const justifikasi = row.querySelector(".edit-justifikasi").value;
+      if(item === null){ alert("Sila nyatakan item lain."); return; }
       if(!lokasi || (kategori==="AsetAlih" && !bilangan)){ alert("Sila lengkapkan semua medan."); return; }
       btn.disabled = true; btn.textContent = "Menyimpan…";
       const res = await gasCall("adminUpdateEntry", {id, kategori, item, bilangan, lokasi, justifikasi});
