@@ -481,6 +481,7 @@
         <select id="fltSekolah"><option value="">Semua Sekolah</option></select>
         <input type="text" id="fltCari" placeholder="Cari item / lokasi…">
         <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btnRefresh">&#8635; Muat Semula</button>
         <button class="btn btn-ghost" id="btnExportCsv">Eksport CSV</button>
         <button class="btn btn-ghost" id="btnExportPdf">Jana Laporan PDF</button>
       </div>
@@ -591,7 +592,7 @@ let editSettingDemo = true; // Kebenaran sekolah sunting permohonan — Pentadbi
 /* =========================================================================
    STATE
    ========================================================================= */
-let state = { role:null, user:null, pending:[], activeCat:null, editAllowed:true };
+let state = { role:null, user:null, pending:[], activeCat:null, editAllowed:true, isViewer:false };
 let schoolMasterAA = [];
 let schoolMasterSK = [];
 
@@ -778,6 +779,9 @@ $("#btnLogin").addEventListener("click", async ()=>{
     showView("sekolah");
   } else {
     const roleLabel = res.user.peranan + (res.user.ppd ? " · " + res.user.ppd : "");
+    // Penyemak & Admin PPD kedua-duanya pemerhati (tiada edit/tukar status).
+    // Beza: Admin PPD ditapis kepada PPD sendiri; Penyemak nampak semua PPD.
+    state.isViewer = (res.user.peranan === "Penyemak" || res.user.peranan === "Admin PPD");
     $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> <span class="role-tag">${roleLabel}</span>`;
     $("#adminMeta").textContent = res.user.nama + " · " + roleLabel;
     $("#tabMasterBtn").style.display = res.user.peranan === "Pentadbir" ? "" : "none";
@@ -1136,7 +1140,7 @@ function buildJustifikasiOptions(kategori, current){
 }
 
 function rowViewHtml(d){
-  const readOnly = state.user.peranan === "Admin PPD";
+  const readOnly = state.isViewer;
   return `<tr data-row-id="${d.id}">
     <td>${d.tarikh}</td>
     <td>${d.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil"}</td>
@@ -1237,6 +1241,17 @@ function renderAdminTable(){
 }
 ["fltKategori","fltPPD","fltSekolah"].forEach(id=>$("#"+id).addEventListener("change", renderAdminTable));
 $("#fltCari").addEventListener("input", renderAdminTable);
+
+$("#btnRefresh").addEventListener("click", async ()=>{
+  const btn = $("#btnRefresh");
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = "Memuatkan…";
+  editingId = null; // batalkan sebarang suntingan yang belum disimpan
+  await initAdmin();
+  btn.disabled = false;
+  btn.innerHTML = original;
+});
 
 $("#btnExportCsv").addEventListener("click", ()=>{
   const rows = filteredData();
