@@ -112,6 +112,19 @@
     margin-top:22px;font-size:12px;color:var(--text-muted);background:var(--brass-tint);
     border:1px solid #EEDDB0;padding:10px 12px;border-radius:3px;
   }
+  .login-notice{
+    margin-bottom:24px;background:var(--brass-tint);border:1px solid #E8CE86;
+    border-left:4px solid var(--brass);border-radius:3px;padding:12px 14px;
+    display:flex;gap:10px;align-items:flex-start;
+  }
+  .login-notice .notice-icon{
+    flex:none;width:22px;height:22px;border-radius:50%;background:var(--brass);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;
+    font-family:var(--font-display);margin-top:1px;
+  }
+  .login-notice .notice-body{font-size:13.5px;line-height:1.5;color:#6B5309;}
+  .login-notice .notice-body b{color:#5A4507;}
+  .login-notice .notice-body .notice-lead{color:var(--danger);font-size:15px;font-weight:700;}
 
   .greet{margin-bottom:28px;}
   .greet h1{font-size:26px;margin:0 0 4px;}
@@ -278,6 +291,12 @@
       <div class="login-card">
         <h1 id="loginTitle">Portal Sekolah</h1>
         <p class="lead" id="loginLead">Gunakan Kod Sekolah sebagai ID dan Kata Laluan.</p>
+        <div class="login-notice" id="loginNotice">
+          <div class="notice-icon">!</div>
+          <div class="notice-body">
+            <span class="notice-lead">Peringatan Penting:</span> Pengetua/Guru Besar <b>WAJIB</b> memastikan data/maklumat yang diisi di sistem ini adalah selari dengan data di <b>SISTEM EMIS</b> berkenaan keadaan peralatan/ruang/bilik/bangunan dan lain-lain.
+          </div>
+        </div>
         <div id="loginError"></div>
         <div class="field">
           <label id="labelId">Kod Sekolah</label>
@@ -719,6 +738,7 @@ document.querySelectorAll(".login-tab").forEach(tab=>{
       $("#labelPw").textContent = "Kata Laluan";
       $("#inputId").placeholder = "Contoh: AAB1023";
       $("#inputPw").placeholder = "Kod Sekolah anda";
+      $("#loginNotice").hidden = false;
       $("#demoNote").innerHTML = DEMO_MODE ? "Mod demo — cuba <b>AAB1023</b> / <b>AAB1023</b>." : "";
     } else {
       $("#loginTitle").textContent = "Portal Admin JPN";
@@ -727,6 +747,7 @@ document.querySelectorAll(".login-tab").forEach(tab=>{
       $("#labelPw").textContent = "Kata Laluan";
       $("#inputId").placeholder = "Contoh: JPNKEDAH";
       $("#inputPw").placeholder = "Kata laluan admin";
+      $("#loginNotice").hidden = true;
       $("#demoNote").innerHTML = DEMO_MODE ? "Mod demo — cuba <b>JPNKEDAH</b> / <b>admin123</b> (Pentadbir), <b>PENYEMAK1</b> / <b>semak123</b> (Penyemak), atau <b>PPDKOTASETAR</b> / <b>ppd123</b> (Admin PPD)." : "";
     }
   });
