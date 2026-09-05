@@ -471,6 +471,7 @@
 
     <div class="tabs">
       <button class="tab-btn active" data-admtab="data">Data Permohonan</button>
+      <button class="tab-btn" data-admtab="ringkasan">Ringkasan Sekolah</button>
       <button class="tab-btn" data-admtab="belummohon">Belum Mohon</button>
       <button class="tab-btn" data-admtab="stats">Statistik &amp; Carta</button>
       <button class="tab-btn" data-admtab="master" id="tabMasterBtn">Urus Senarai Item</button>
@@ -503,6 +504,30 @@
         </table>
       </div>
       <div class="empty-state" id="admEmpty" hidden>Tiada permohonan sepadan dengan penapis ini.</div>
+    </div>
+
+    <div id="admTabRingkasan" hidden>
+      <div class="toolbar">
+        <input type="text" id="fltCariRingkasan" placeholder="Cari sekolah / kod…">
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btnRefreshRingkasan">&#8635; Muat Semula</button>
+        <button class="btn btn-ghost" id="btnExportRingkasanCsv">Eksport CSV</button>
+      </div>
+      <div class="belum-summary" id="ringkasanSummary"></div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Bil.</th><th>Kod Sekolah</th><th>Nama Sekolah</th><th>PPD</th>
+              <th style="text-align:center;">Aset Alih</th>
+              <th style="text-align:center;">Selenggara Kecil</th>
+              <th style="text-align:center;">Jumlah</th>
+            </tr>
+          </thead>
+          <tbody id="ringkasanTableBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="ringkasanEmpty" hidden>Tiada permohonan direkodkan lagi.</div>
     </div>
 
     <div id="admTabBelumMohon" hidden>
@@ -1092,11 +1117,13 @@ document.querySelectorAll(".tab-btn").forEach(t=>{
     document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
     t.classList.add("active");
     $("#admTabData").hidden = t.dataset.admtab!=="data";
+    $("#admTabRingkasan").hidden = t.dataset.admtab!=="ringkasan";
     $("#admTabBelumMohon").hidden = t.dataset.admtab!=="belummohon";
     $("#admTabStats").hidden = t.dataset.admtab!=="stats";
     $("#admTabMaster").hidden = t.dataset.admtab!=="master";
     if(t.dataset.admtab==="stats") renderCharts();
     if(t.dataset.admtab==="belummohon") loadBelumMohon();
+    if(t.dataset.admtab==="ringkasan") renderRingkasan();
   });
 });
 
@@ -1193,6 +1220,79 @@ $("#btnExportBelumCsv").addEventListener("click", ()=>{
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "sekolah-belum-mohon.csv";
+  a.click();
+});
+
+/* ---------- Ringkasan Sekolah (jumlah permohonan per sekolah) ---------- */
+function computeRingkasan(){
+  // Kumpul ikut kod sekolah daripada admData (sudah terskop ikut peranan).
+  const map = {};
+  admData.forEach(d=>{
+    const key = String(d.kodSekolah).trim().toUpperCase();
+    if(!map[key]){
+      map[key] = { kod:d.kodSekolah, nama:d.sekolah, ppd:d.ppd, asetAlih:0, selenggara:0 };
+    }
+    if(d.kategori==="AsetAlih") map[key].asetAlih += 1;
+    else map[key].selenggara += 1;
+  });
+  return Object.values(map)
+    .map(r => ({...r, jumlah: r.asetAlih + r.selenggara}))
+    .sort((a,b)=> (String(a.ppd)+a.nama).localeCompare(String(b.ppd)+b.nama));
+}
+
+function filteredRingkasan(){
+  const cari = $("#fltCariRingkasan").value.trim().toLowerCase();
+  const all = computeRingkasan();
+  if(!cari) return all;
+  return all.filter(r => String(r.nama).toLowerCase().includes(cari) || String(r.kod).toLowerCase().includes(cari));
+}
+
+function renderRingkasan(){
+  const rows = filteredRingkasan();
+  const all = computeRingkasan();
+  const scope = state.user.peranan === "Admin PPD" ? state.user.ppd : "seluruh Kedah";
+  const totalAA = all.reduce((s,r)=>s+r.asetAlih,0);
+  const totalSK = all.reduce((s,r)=>s+r.selenggara,0);
+  $("#ringkasanSummary").innerHTML = all.length === 0
+    ? `Tiada permohonan direkodkan lagi (${scope}).`
+    : `<b>${all.length}</b> sekolah telah membuat permohonan (${scope}) — ${totalAA} Aset Alih, ${totalSK} Selenggara Kecil.`;
+  const body = $("#ringkasanTableBody");
+  $("#ringkasanEmpty").hidden = all.length > 0;
+  body.innerHTML = rows.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.kod}</td>
+      <td>${r.nama}</td>
+      <td>${r.ppd}</td>
+      <td style="text-align:center;">${r.asetAlih}</td>
+      <td style="text-align:center;">${r.selenggara}</td>
+      <td style="text-align:center;font-weight:700;color:var(--navy);">${r.jumlah}</td>
+    </tr>`).join("");
+}
+
+$("#fltCariRingkasan").addEventListener("input", renderRingkasan);
+
+$("#btnRefreshRingkasan").addEventListener("click", async ()=>{
+  const btn = $("#btnRefreshRingkasan");
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = "Memuatkan…";
+  await initAdmin();
+  renderRingkasan();
+  btn.disabled = false;
+  btn.innerHTML = original;
+});
+
+$("#btnExportRingkasanCsv").addEventListener("click", ()=>{
+  const rows = filteredRingkasan();
+  const header = ["Bil","Kod Sekolah","Nama Sekolah","PPD","Aset Alih","Selenggara Kecil","Jumlah"];
+  const csv = [header.join(",")].concat(rows.map((r,i)=>[
+    i+1, r.kod, `"${r.nama}"`, `"${r.ppd}"`, r.asetAlih, r.selenggara, r.jumlah
+  ].join(","))).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ringkasan-sekolah.csv";
   a.click();
 });
 
