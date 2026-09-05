@@ -260,6 +260,11 @@
   .chart-panel .chart-box{position:relative;height:260px;}
 
   .empty-state{text-align:center;padding:50px 20px;color:var(--text-muted);font-size:13.5px;}
+  .belum-summary{
+    background:var(--brass-tint);border:1px solid #E8CE86;border-left:4px solid var(--brass);
+    border-radius:3px;padding:12px 16px;margin-bottom:16px;font-size:13.5px;color:#6B5309;
+  }
+  .belum-summary b{color:#5A4507;font-family:var(--font-display);font-size:15px;}
   .footnote{margin-top:40px;font-size:12px;color:var(--text-muted);text-align:center;}
 </style>
 </head>
@@ -466,6 +471,7 @@
 
     <div class="tabs">
       <button class="tab-btn active" data-admtab="data">Data Permohonan</button>
+      <button class="tab-btn" data-admtab="belummohon">Belum Mohon</button>
       <button class="tab-btn" data-admtab="stats">Statistik &amp; Carta</button>
       <button class="tab-btn" data-admtab="master" id="tabMasterBtn">Urus Senarai Item</button>
     </div>
@@ -497,6 +503,25 @@
         </table>
       </div>
       <div class="empty-state" id="admEmpty" hidden>Tiada permohonan sepadan dengan penapis ini.</div>
+    </div>
+
+    <div id="admTabBelumMohon" hidden>
+      <div class="toolbar">
+        <input type="text" id="fltCariBelum" placeholder="Cari sekolah / kod…">
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btnRefreshBelum">&#8635; Muat Semula</button>
+        <button class="btn btn-ghost" id="btnExportBelumCsv">Eksport CSV</button>
+      </div>
+      <div class="belum-summary" id="belumSummary"></div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Bil.</th><th>Kod Sekolah</th><th>Nama Sekolah</th><th>PPD</th></tr>
+          </thead>
+          <tbody id="belumTableBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="belumEmpty" hidden>Semua sekolah telah membuat permohonan. Tiada sekolah yang tertinggal. 🎉</div>
     </div>
 
     <div id="admTabStats" hidden>
@@ -564,7 +589,10 @@ const DEMO_SEKOLAH = [
   { kod:"AAC2045", nama:"SMK Sungai Petani", ppd:"PPD Kuala Muda" },
   { kod:"AAD3067", nama:"SK Jitra", ppd:"PPD Kubang Pasu" },
   { kod:"AAE4089", nama:"SMK Kulim", ppd:"PPD Kulim Bandar Baharu" },
-  { kod:"AAF5012", nama:"SK Baling", ppd:"PPD Baling" }
+  { kod:"AAF5012", nama:"SK Baling", ppd:"PPD Baling" },
+  { kod:"AAG6001", nama:"SK Simpang Kuala", ppd:"PPD Kota Setar" },
+  { kod:"AAH7002", nama:"SMK Taman Ria", ppd:"PPD Kuala Muda" },
+  { kod:"AAI8003", nama:"SK Kuala Nerang", ppd:"PPD Padang Terap" }
 ];
 const DEMO_ADMIN = [
   { id:"JPNKEDAH", pw:"admin123", nama:"Sektor S4PD, JPN Kedah", peranan:"Pentadbir", ppd:"" },
@@ -650,6 +678,17 @@ function demoHandler(action, p){
         }
         case "ppdGetPermohonan": {
           resolve(demoPermohonan.filter(d=>d.ppd.toUpperCase()===String(p.ppd).toUpperCase()));
+          break;
+        }
+        case "getSekolahBelumMohon": {
+          const ppdFilter = String(p.ppd||"").trim().toUpperCase();
+          const sudah = {};
+          demoPermohonan.forEach(d=>{ sudah[d.kodSekolah.toUpperCase()] = true; });
+          const belum = DEMO_SEKOLAH
+            .filter(s => (!ppdFilter || s.ppd.toUpperCase()===ppdFilter) && !sudah[s.kod.toUpperCase()])
+            .map(s => ({ kod:s.kod, nama:s.nama, ppd:s.ppd }))
+            .sort((a,b)=>(a.ppd+a.nama).localeCompare(b.ppd+b.nama));
+          resolve(belum);
           break;
         }
         case "sekolahUpdateEntry": {
@@ -1053,9 +1092,11 @@ document.querySelectorAll(".tab-btn").forEach(t=>{
     document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
     t.classList.add("active");
     $("#admTabData").hidden = t.dataset.admtab!=="data";
+    $("#admTabBelumMohon").hidden = t.dataset.admtab!=="belummohon";
     $("#admTabStats").hidden = t.dataset.admtab!=="stats";
     $("#admTabMaster").hidden = t.dataset.admtab!=="master";
     if(t.dataset.admtab==="stats") renderCharts();
+    if(t.dataset.admtab==="belummohon") loadBelumMohon();
   });
 });
 
@@ -1094,6 +1135,65 @@ $("#toggleEditSetting").addEventListener("change", async (e)=>{
     e.target.checked = !aktif;
     alert(res.msg || "Gagal kemas kini tetapan.");
   }
+});
+
+/* ---------- Belum Mohon ---------- */
+let belumMohonData = [];
+
+async function loadBelumMohon(){
+  const params = state.user.peranan === "Admin PPD" ? { ppd: state.user.ppd } : {};
+  belumMohonData = await gasCall("getSekolahBelumMohon", params);
+  renderBelumMohon();
+}
+
+function filteredBelum(){
+  const cari = $("#fltCariBelum").value.trim().toLowerCase();
+  if(!cari) return belumMohonData;
+  return belumMohonData.filter(s =>
+    String(s.nama).toLowerCase().includes(cari) || String(s.kod).toLowerCase().includes(cari)
+  );
+}
+
+function renderBelumMohon(){
+  const rows = filteredBelum();
+  const scope = state.user.peranan === "Admin PPD" ? state.user.ppd : "seluruh Kedah";
+  $("#belumSummary").innerHTML = belumMohonData.length === 0
+    ? `Semua sekolah dalam ${scope} telah membuat permohonan.`
+    : `<b>${belumMohonData.length}</b> sekolah masih belum membuat sebarang permohonan (${scope}).`;
+  const body = $("#belumTableBody");
+  $("#belumEmpty").hidden = belumMohonData.length > 0;
+  body.innerHTML = rows.map((s, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${s.kod}</td>
+      <td>${s.nama}</td>
+      <td>${s.ppd}</td>
+    </tr>`).join("");
+}
+
+$("#fltCariBelum").addEventListener("input", renderBelumMohon);
+
+$("#btnRefreshBelum").addEventListener("click", async ()=>{
+  const btn = $("#btnRefreshBelum");
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = "Memuatkan…";
+  await loadBelumMohon();
+  btn.disabled = false;
+  btn.innerHTML = original;
+});
+
+$("#btnExportBelumCsv").addEventListener("click", ()=>{
+  const rows = filteredBelum();
+  const header = ["Bil","Kod Sekolah","Nama Sekolah","PPD"];
+  const csv = [header.join(",")].concat(rows.map((s,i)=>[
+    i+1, s.kod, `"${s.nama}"`, `"${s.ppd}"`
+  ].join(","))).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "sekolah-belum-mohon.csv";
+  a.click();
 });
 
 function renderAdminStats(){
