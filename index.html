@@ -238,6 +238,8 @@
     padding:4px 9px;border-radius:3px;margin-right:4px;white-space:nowrap;
   }
   .btn-ghost-sm:hover{border-color:var(--navy);}
+  .btn-danger-sm{color:var(--danger);border-color:#F0C9C4;}
+  .btn-danger-sm:hover{border-color:var(--danger);background:var(--danger-bg);}
 
   .master-list{background:var(--surface);border:1px solid var(--border);border-radius:3px;}
   .master-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);}
@@ -756,6 +758,20 @@ function demoHandler(action, p){
           if(p.kategori==="AsetAlih" && p.bilangan!=="") rec.bilangan = p.bilangan;
           if(p.lokasi) rec.lokasi = p.lokasi;
           if(p.justifikasi) rec.justifikasi = p.justifikasi;
+          resolve({ok:true});
+          break;
+        }
+        case "adminDeleteEntry": {
+          const peranan = p.peranan || "";
+          if(peranan !== "Pentadbir" && peranan !== "Admin PPD"){
+            resolve({ok:false,msg:"Anda tidak mempunyai kebenaran untuk memadam rekod."}); break;
+          }
+          const idx = demoPermohonan.findIndex(x=>x.id===p.id);
+          if(idx<0){ resolve({ok:false,msg:"Rekod tidak dijumpai."}); break; }
+          if(peranan==="Admin PPD" && demoPermohonan[idx].ppd.toUpperCase()!==String(p.ppd).toUpperCase()){
+            resolve({ok:false,msg:"Anda hanya boleh memadam rekod dalam PPD anda sendiri."}); break;
+          }
+          demoPermohonan.splice(idx,1);
           resolve({ok:true});
           break;
         }
@@ -1341,6 +1357,9 @@ function buildJustifikasiOptions(kategori, current){
 
 function rowViewHtml(d){
   const readOnly = state.isViewer;
+  const canDelete = (state.user.peranan === "Pentadbir" || state.user.peranan === "Admin PPD");
+  const editBtn = readOnly ? "" : `<button class="btn-ghost-sm" data-edit-btn data-id="${d.id}">Edit</button>`;
+  const delBtn = canDelete ? `<button class="btn-ghost-sm btn-danger-sm" data-del-btn data-id="${d.id}" data-kategori="${d.kategori}">Padam</button>` : "";
   return `<tr data-row-id="${d.id}">
     <td>${d.tarikh}</td>
     <td>${d.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil"}</td>
@@ -1358,7 +1377,7 @@ function rowViewHtml(d){
         <option ${d.status==="Selesai"?"selected":""}>Selesai</option>
       </select>`}
     </td>
-    <td>${readOnly ? "" : `<button class="btn-ghost-sm" data-edit-btn data-id="${d.id}">Edit</button>`}</td>
+    <td style="white-space:nowrap;">${editBtn}${editBtn && delBtn ? " " : ""}${delBtn}</td>
   </tr>`;
 }
 function statusPillClass(status){
@@ -1406,6 +1425,27 @@ function renderAdminTable(){
   });
   body.querySelectorAll("[data-edit-btn]").forEach(btn=>{
     btn.addEventListener("click", ()=>{ editingId = btn.dataset.id; renderAdminTable(); });
+  });
+  body.querySelectorAll("[data-del-btn]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.dataset.id;
+      const kategori = btn.dataset.kategori;
+      const rec = admData.find(x=>x.id===id);
+      const label = rec ? `${rec.item} — ${rec.sekolah}` : id;
+      if(!confirm(`Padam permohonan ini?\n\n${label}\n\nTindakan ini tidak boleh diundur.`)) return;
+      btn.disabled = true; btn.textContent = "Memadam…";
+      const res = await gasCall("adminDeleteEntry", {
+        id, kategori, peranan: state.user.peranan, ppd: state.user.ppd || ""
+      });
+      if(res.ok){
+        admData = admData.filter(x=>x.id!==id);
+        editingId = null;
+        renderAdminStats(); populateAdminFilters(); renderAdminTable();
+      } else {
+        alert(res.msg || "Gagal memadam rekod.");
+        btn.disabled = false; btn.textContent = "Padam";
+      }
+    });
   });
   body.querySelectorAll("[data-cancel-edit]").forEach(btn=>{
     btn.addEventListener("click", ()=>{ editingId = null; renderAdminTable(); });
