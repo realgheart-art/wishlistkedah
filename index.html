@@ -267,6 +267,29 @@
     border-radius:3px;padding:12px 16px;margin-bottom:16px;font-size:13.5px;color:#6B5309;
   }
   .belum-summary b{color:#5A4507;font-family:var(--font-display);font-size:15px;}
+  .carian-hit{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--surface);border:1px solid var(--border);border-radius:3px;
+    padding:12px 16px;margin-bottom:8px;cursor:pointer;
+  }
+  .carian-hit:hover{border-color:var(--navy);background:#FBFAF7;}
+  .carian-hit .hit-info .hit-name{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--navy);}
+  .carian-hit .hit-info .hit-meta{font-size:12.5px;color:var(--text-muted);margin-top:2px;}
+  .carian-hit .hit-count{
+    flex:none;font-size:12.5px;color:var(--navy);background:var(--navy-tint);
+    padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap;
+  }
+  .carian-detail-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    background:var(--navy);color:#fff;border-radius:3px;padding:16px 20px;margin-bottom:16px;
+  }
+  .carian-detail-head .cd-name{font-family:var(--font-display);font-size:19px;font-weight:600;}
+  .carian-detail-head .cd-meta{font-size:13px;color:#B9C6D4;margin-top:3px;}
+  .carian-detail-head .cd-counts{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+  .carian-detail-head .cd-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:3px 11px;font-size:12.5px;}
+  .carian-back{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 14px;border-radius:3px;font-size:13px;flex:none;}
+  .carian-back:hover{background:rgba(255,255,255,.1);}
+  .cd-section-title{font-family:var(--font-display);font-size:15px;color:var(--navy);margin:20px 0 10px;}
   .footnote{margin-top:40px;font-size:12px;color:var(--text-muted);text-align:center;}
 </style>
 </head>
@@ -473,6 +496,7 @@
 
     <div class="tabs">
       <button class="tab-btn active" data-admtab="data">Data Permohonan</button>
+      <button class="tab-btn" data-admtab="carian">Carian Sekolah</button>
       <button class="tab-btn" data-admtab="ringkasan">Ringkasan Sekolah</button>
       <button class="tab-btn" data-admtab="belummohon">Belum Mohon</button>
       <button class="tab-btn" data-admtab="stats">Statistik &amp; Carta</button>
@@ -506,6 +530,16 @@
         </table>
       </div>
       <div class="empty-state" id="admEmpty" hidden>Tiada permohonan sepadan dengan penapis ini.</div>
+    </div>
+
+    <div id="admTabCarian" hidden>
+      <div class="toolbar">
+        <input type="text" id="carianInput" placeholder="Taip nama atau kod sekolah…" style="min-width:280px;">
+        <div class="spacer"></div>
+      </div>
+      <div id="carianResults"></div>
+      <div id="carianDetail" hidden></div>
+      <div class="empty-state" id="carianPrompt">Taip nama atau kod sekolah di atas untuk mula mencari.</div>
     </div>
 
     <div id="admTabRingkasan" hidden>
@@ -1133,6 +1167,7 @@ document.querySelectorAll(".tab-btn").forEach(t=>{
     document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
     t.classList.add("active");
     $("#admTabData").hidden = t.dataset.admtab!=="data";
+    $("#admTabCarian").hidden = t.dataset.admtab!=="carian";
     $("#admTabRingkasan").hidden = t.dataset.admtab!=="ringkasan";
     $("#admTabBelumMohon").hidden = t.dataset.admtab!=="belummohon";
     $("#admTabStats").hidden = t.dataset.admtab!=="stats";
@@ -1140,6 +1175,7 @@ document.querySelectorAll(".tab-btn").forEach(t=>{
     if(t.dataset.admtab==="stats") renderCharts();
     if(t.dataset.admtab==="belummohon") loadBelumMohon();
     if(t.dataset.admtab==="ringkasan") renderRingkasan();
+    if(t.dataset.admtab==="carian") resetCarian();
   });
 });
 
@@ -1313,6 +1349,108 @@ $("#btnExportRingkasanCsv").addEventListener("click", ()=>{
   a.download = "ringkasan-sekolah.csv";
   a.click();
 });
+
+/* ---------- Carian Sekolah ---------- */
+function resetCarian(){
+  $("#carianInput").value = "";
+  $("#carianResults").innerHTML = "";
+  $("#carianDetail").hidden = true;
+  $("#carianDetail").innerHTML = "";
+  $("#carianPrompt").hidden = false;
+}
+
+function carianSchools(keyword){
+  const k = keyword.trim().toLowerCase();
+  if(!k) return [];
+  // Kumpul sekolah unik daripada admData (sudah terskop ikut peranan).
+  const map = {};
+  admData.forEach(d=>{
+    const key = String(d.kodSekolah).trim().toUpperCase();
+    if(!map[key]) map[key] = { kod:d.kodSekolah, nama:d.sekolah, ppd:d.ppd, count:0 };
+    map[key].count += 1;
+  });
+  return Object.values(map)
+    .filter(s => String(s.nama).toLowerCase().includes(k) || String(s.kod).toLowerCase().includes(k))
+    .sort((a,b)=> a.nama.localeCompare(b.nama));
+}
+
+function renderCarianResults(){
+  const kw = $("#carianInput").value;
+  $("#carianDetail").hidden = true;
+  $("#carianDetail").innerHTML = "";
+  if(!kw.trim()){
+    $("#carianResults").innerHTML = "";
+    $("#carianPrompt").hidden = false;
+    return;
+  }
+  $("#carianPrompt").hidden = true;
+  const hits = carianSchools(kw);
+  if(hits.length === 0){
+    $("#carianResults").innerHTML = '<div class="empty-state">Tiada sekolah sepadan yang telah membuat permohonan. (Sekolah yang belum mohon boleh disemak di tab "Belum Mohon".)</div>';
+    return;
+  }
+  $("#carianResults").innerHTML = hits.map(s=>`
+    <div class="carian-hit" data-kod="${s.kod}">
+      <div class="hit-info">
+        <div class="hit-name">${s.nama}</div>
+        <div class="hit-meta">${s.kod} · ${s.ppd}</div>
+      </div>
+      <div class="hit-count">${s.count} permohonan</div>
+    </div>`).join("");
+  $("#carianResults").querySelectorAll(".carian-hit").forEach(el=>{
+    el.addEventListener("click", ()=> showCarianDetail(el.dataset.kod));
+  });
+}
+
+function showCarianDetail(kod){
+  const recs = admData.filter(d => String(d.kodSekolah).trim().toUpperCase() === String(kod).trim().toUpperCase());
+  if(recs.length === 0) return;
+  const first = recs[0];
+  const aa = recs.filter(r=>r.kategori==="AsetAlih");
+  const sk = recs.filter(r=>r.kategori==="Selenggara");
+
+  const rowHtml = (r)=>`
+    <tr>
+      <td>${r.tarikh}</td>
+      <td>${r.item}</td>
+      <td>${displayButiran(r)}</td>
+      <td>${r.justifikasi}</td>
+      <td><span class="status-pill ${statusPillClass(r.status)}">${r.status}</span></td>
+    </tr>`;
+
+  const tableHtml = (title, rows)=> rows.length === 0 ? "" : `
+    <div class="cd-section-title">${title} (${rows.length})</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Tarikh</th><th>Item / Kerosakan</th><th>Butiran</th><th>Justifikasi</th><th>Status</th></tr></thead>
+        <tbody>${rows.map(rowHtml).join("")}</tbody>
+      </table>
+    </div>`;
+
+  $("#carianResults").innerHTML = "";
+  $("#carianPrompt").hidden = true;
+  const detail = $("#carianDetail");
+  detail.hidden = false;
+  detail.innerHTML = `
+    <div class="carian-detail-head">
+      <div>
+        <div class="cd-name">${first.sekolah}</div>
+        <div class="cd-meta">${first.kodSekolah} · ${first.ppd}</div>
+        <div class="cd-counts">
+          <span class="cd-pill">${aa.length} Aset Alih</span>
+          <span class="cd-pill">${sk.length} Selenggara Kecil</span>
+          <span class="cd-pill">${recs.length} Jumlah</span>
+        </div>
+      </div>
+      <button class="carian-back" id="btnCarianBack">&larr; Kembali ke hasil</button>
+    </div>
+    ${tableHtml("Aset Alih", aa)}
+    ${tableHtml("Selenggara Kecil", sk)}
+  `;
+  $("#btnCarianBack").addEventListener("click", renderCarianResults);
+}
+
+$("#carianInput").addEventListener("input", renderCarianResults);
 
 function renderAdminStats(){
   $("#statTotal").textContent = admData.length;
