@@ -605,7 +605,7 @@
 /* =========================================================================
    KONFIGURASI
    ========================================================================= */
-const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycbw9xO6Unkoz98yGPi0Qy_8GKXKrIyP9ujVqPQT6TRGS1BdUIuSxado1oeZzN_x5yrM3/exec" };
+const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycbzuxpJp1i-7q_FMsbJIlCm34qQGzH-vDAwrGkqjz8NYceRHF1u0JZohPnRM_dvTzHp6SA/exec" };
 const DEMO_MODE = !CONFIG.GAS_URL;
 
 /* =========================================================================
@@ -1143,10 +1143,11 @@ document.querySelectorAll(".tab-btn").forEach(t=>{
   });
 });
 
-async function initAdmin(){
+async function initAdmin(forceFresh){
+  const ff = forceFresh ? { forceFresh: "true" } : {};
   admData = state.user.peranan === "Admin PPD"
-    ? await gasCall("ppdGetPermohonan", { ppd: state.user.ppd })
-    : await gasCall("adminGetPermohonan", {});
+    ? await gasCall("ppdGetPermohonan", { ppd: state.user.ppd, ...ff })
+    : await gasCall("adminGetPermohonan", ff);
   renderAdminStats();
   populateAdminFilters();
   renderAdminTable();
@@ -1183,8 +1184,9 @@ $("#toggleEditSetting").addEventListener("change", async (e)=>{
 /* ---------- Belum Mohon ---------- */
 let belumMohonData = [];
 
-async function loadBelumMohon(){
+async function loadBelumMohon(forceFresh){
   const params = state.user.peranan === "Admin PPD" ? { ppd: state.user.ppd } : {};
+  if(forceFresh) params.forceFresh = "true";
   belumMohonData = await gasCall("getSekolahBelumMohon", params);
   renderBelumMohon();
 }
@@ -1221,7 +1223,7 @@ $("#btnRefreshBelum").addEventListener("click", async ()=>{
   btn.disabled = true;
   const original = btn.innerHTML;
   btn.innerHTML = "Memuatkan…";
-  await loadBelumMohon();
+  await loadBelumMohon(true);
   btn.disabled = false;
   btn.innerHTML = original;
 });
@@ -1293,7 +1295,7 @@ $("#btnRefreshRingkasan").addEventListener("click", async ()=>{
   btn.disabled = true;
   const original = btn.innerHTML;
   btn.innerHTML = "Memuatkan…";
-  await initAdmin();
+  await initAdmin(true); // forceFresh
   renderRingkasan();
   btn.disabled = false;
   btn.innerHTML = original;
@@ -1488,7 +1490,7 @@ $("#btnRefresh").addEventListener("click", async ()=>{
   const original = btn.innerHTML;
   btn.innerHTML = "Memuatkan…";
   editingId = null; // batalkan sebarang suntingan yang belum disimpan
-  await initAdmin();
+  await initAdmin(true); // forceFresh — jamin data terkini
   btn.disabled = false;
   btn.innerHTML = original;
 });
