@@ -291,6 +291,32 @@
   .carian-back:hover{background:rgba(255,255,255,.1);}
   .cd-section-title{font-family:var(--font-display);font-size:15px;color:var(--navy);margin:20px 0 10px;}
   .footnote{margin-top:40px;font-size:12px;color:var(--text-muted);text-align:center;}
+
+  /* ---------- Loading overlay & spinner ---------- */
+  .loading-overlay{
+    position:fixed;inset:0;background:rgba(15,41,66,.45);
+    display:flex;align-items:center;justify-content:center;z-index:9999;
+  }
+  .loading-box{
+    background:var(--surface);border-radius:6px;padding:26px 34px;
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+    box-shadow:0 8px 30px rgba(15,41,66,.25);min-width:200px;
+  }
+  .spinner{
+    width:38px;height:38px;border:3px solid var(--navy-tint);border-top-color:var(--brass);
+    border-radius:50%;animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-box .loading-text{font-size:13.5px;color:var(--navy);font-weight:600;}
+  .btn .btn-spinner{
+    display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);
+    border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;
+  }
+  .inline-loading{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:40px 20px;color:var(--text-muted);font-size:13.5px;
+  }
+  .inline-loading .spinner{width:26px;height:26px;border-width:2.5px;}
 </style>
 </head>
 <body>
@@ -631,6 +657,13 @@
   <p class="footnote">Sistem Permohonan Aset Alih &amp; Penyelenggaraan · JPN Kedah</p>
 </main>
 
+<div class="loading-overlay" id="loadingOverlay" hidden>
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Memuatkan data…</div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -836,6 +869,13 @@ const $ = (sel)=>document.querySelector(sel);
 const views = { login:$("#view-login"), sekolah:$("#view-sekolah"), mysubmissions:$("#view-mysubmissions"), confirm:$("#view-confirm"), admin:$("#view-admin") };
 function showView(name){ Object.values(views).forEach(v=>v.hidden = true); views[name].hidden = false; }
 
+/* ---------- Loading indicators ---------- */
+function showLoading(text){
+  $("#loadingText").textContent = text || "Memuatkan data…";
+  $("#loadingOverlay").hidden = false;
+}
+function hideLoading(){ $("#loadingOverlay").hidden = true; }
+
 /* =========================================================================
    LOGIN
    ========================================================================= */
@@ -886,10 +926,12 @@ $("#btnLogin").addEventListener("click", async ()=>{
     $("#sekolahName").textContent = res.user.nama;
     $("#sekolahMeta").textContent = `Kod Sekolah: ${res.user.kod} · ${res.user.ppd}`;
     resetSekolahView();
+    showLoading("Menyediakan portal sekolah…");
     await loadMasterLists();
     const editSetting = await gasCall("getEditSetting", {});
     state.editAllowed = !!(editSetting && editSetting.benarkanEdit);
     applyEditTextState();
+    hideLoading();
     showView("sekolah");
   } else {
     const roleLabel = res.user.peranan + (res.user.ppd ? " · " + res.user.ppd : "");
@@ -901,8 +943,10 @@ $("#btnLogin").addEventListener("click", async ()=>{
     $("#tabMasterBtn").style.display = res.user.peranan === "Pentadbir" ? "" : "none";
     $("#fltPPD").hidden = res.user.peranan === "Admin PPD";
     document.querySelector('.tab-btn[data-admtab="data"]').click();
+    showLoading("Memuatkan data permohonan…");
     showView("admin");
     await initAdmin();
+    hideLoading();
   }
 });
 
@@ -1024,7 +1068,7 @@ $("#btnSubmitAll").addEventListener("click", async ()=>{
     ? `Hantar ${state.pending.length} permohonan?`
     : `Hantar ${state.pending.length} permohonan? Senarai ini tidak boleh diubah selepas dihantar.`;
   if(!confirm(confirmMsg)) return;
-  $("#btnSubmitAll").disabled = true; $("#btnSubmitAll").textContent = "Menghantar…";
+  $("#btnSubmitAll").disabled = true; $("#btnSubmitAll").innerHTML = '<span class="btn-spinner"></span>Menghantar…';
   const res = await gasCall("submitEntries", {
     kodSekolah: state.user.kod,
     entries: state.pending
@@ -1045,7 +1089,9 @@ let mySubEditingId = null;
 async function openMySubmissions(){
   $("#mySubMeta").textContent = `Kod Sekolah: ${state.user.kod} · ${state.user.ppd}`;
   mySubEditingId = null;
+  showLoading("Memuatkan permohonan anda…");
   await refreshMySubmissions();
+  hideLoading();
   showView("mysubmissions");
 }
 
@@ -1223,6 +1269,9 @@ let belumMohonData = [];
 async function loadBelumMohon(forceFresh){
   const params = state.user.peranan === "Admin PPD" ? { ppd: state.user.ppd } : {};
   if(forceFresh) params.forceFresh = "true";
+  $("#belumTableBody").innerHTML = "";
+  $("#belumSummary").innerHTML = '<div class="inline-loading"><div class="spinner"></div> Memuatkan senarai sekolah…</div>';
+  $("#belumEmpty").hidden = true;
   belumMohonData = await gasCall("getSekolahBelumMohon", params);
   renderBelumMohon();
 }
@@ -1626,7 +1675,7 @@ $("#btnRefresh").addEventListener("click", async ()=>{
   const btn = $("#btnRefresh");
   btn.disabled = true;
   const original = btn.innerHTML;
-  btn.innerHTML = "Memuatkan…";
+  btn.innerHTML = '<span class="btn-spinner" style="border-color:rgba(15,41,66,.25);border-top-color:var(--navy);"></span>Memuatkan…';
   editingId = null; // batalkan sebarang suntingan yang belum disimpan
   await initAdmin(true); // forceFresh — jamin data terkini
   btn.disabled = false;
