@@ -290,6 +290,33 @@
   .carian-back{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 14px;border-radius:3px;font-size:13px;flex:none;}
   .carian-back:hover{background:rgba(255,255,255,.1);}
   .cd-section-title{font-family:var(--font-display);font-size:15px;color:var(--navy);margin:20px 0 10px;}
+
+  /* ---------- Clickable count + modal ---------- */
+  .count-link{
+    color:var(--navy);font-weight:600;cursor:pointer;text-decoration:underline;
+    text-decoration-color:var(--border);text-underline-offset:3px;
+  }
+  .count-link:hover{text-decoration-color:var(--navy);}
+  .count-zero{color:var(--text-muted);}
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(15,41,66,.45);z-index:10000;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-box{
+    background:var(--surface);border-radius:6px;max-width:640px;width:100%;
+    max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(15,41,66,.3);
+  }
+  .modal-head{
+    background:var(--navy);color:#fff;border-radius:6px 6px 0 0;padding:16px 20px;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  }
+  .modal-head .mh-title{font-family:var(--font-display);font-size:17px;font-weight:600;}
+  .modal-head .mh-sub{font-size:12.5px;color:#B9C6D4;margin-top:3px;}
+  .modal-head .mh-close{background:transparent;border:none;color:#fff;font-size:24px;line-height:1;cursor:pointer;padding:0 4px;flex:none;}
+  .modal-head .mh-close:hover{color:var(--brass-light);}
+  .modal-body{padding:8px 0;overflow-y:auto;}
+  .modal-body table.data-table{border:none;}
+  .modal-body table.data-table th{position:sticky;top:0;}
   .footnote{margin-top:40px;font-size:12px;color:var(--text-muted);text-align:center;}
 
   /* ---------- Loading overlay & spinner ---------- */
@@ -664,6 +691,19 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="itemModal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="mh-title" id="modalTitle">—</div>
+        <div class="mh-sub" id="modalSub">—</div>
+      </div>
+      <button class="mh-close" id="modalClose" title="Tutup">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -672,7 +712,7 @@
 /* =========================================================================
    KONFIGURASI
    ========================================================================= */
-const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycbzuxpJp1i-7q_FMsbJIlCm34qQGzH-vDAwrGkqjz8NYceRHF1u0JZohPnRM_dvTzHp6SA/exec" };
+const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycbz0JLpsPzKTq1tJP8fusKpFaQZeZBsL-8jZ42p89aPpWgFDCkh43y1bsfmOIslb8XMekg/exec" };
 const DEMO_MODE = !CONFIG.GAS_URL;
 
 /* =========================================================================
@@ -794,6 +834,15 @@ function demoHandler(action, p){
           if(p.kategori==="AsetAlih" && p.bilangan!=="") rec.bilangan = p.bilangan;
           if(p.lokasi) rec.lokasi = p.lokasi;
           if(p.justifikasi) rec.justifikasi = p.justifikasi;
+          resolve({ok:true});
+          break;
+        }
+        case "sekolahDeleteEntry": {
+          if(!editSettingDemo){ resolve({ok:false,msg:"Tempoh sunting permohonan telah ditutup oleh JPN. Hubungi PPD/JPN Kedah untuk pindaan."}); break; }
+          const idx = demoPermohonan.findIndex(x=>x.id===p.id);
+          if(idx<0){ resolve({ok:false,msg:"Rekod tidak dijumpai."}); break; }
+          if(demoPermohonan[idx].kodSekolah.toUpperCase() !== String(p.kodSekolah).toUpperCase()){ resolve({ok:false,msg:"Anda hanya boleh memadam permohonan sekolah anda sendiri."}); break; }
+          demoPermohonan.splice(idx,1);
           resolve({ok:true});
           break;
         }
@@ -1095,8 +1144,10 @@ async function openMySubmissions(){
   showView("mysubmissions");
 }
 
+let mySubData = [];
 async function refreshMySubmissions(){
   const rows = await gasCall("getSekolahPermohonan", { kodSekolah: state.user.kod });
+  mySubData = rows;
   renderEditBanner();
   renderMySubList(rows);
 }
@@ -1140,7 +1191,7 @@ function renderMySubList(rows){
           <div class="li-title">${d.item} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">— ${d.kategori==="AsetAlih"?"Aset Alih":"Selenggara Kecil"} · ${d.status}</span></div>
           <div class="li-meta">${line1} · ${d.justifikasi}</div>
         </div>
-        ${state.editAllowed ? `<div class="li-actions"><button class="btn-ghost-sm" data-mysub-edit data-id="${d.id}">Edit</button></div>` : ""}
+        ${state.editAllowed ? `<div class="li-actions"><button class="btn-ghost-sm" data-mysub-edit data-id="${d.id}">Edit</button><button class="btn-ghost-sm btn-danger-sm" data-mysub-del data-id="${d.id}" data-kategori="${d.kategori}">Padam</button></div>` : ""}
       </div>`;
     }
     return `
@@ -1167,6 +1218,24 @@ function renderMySubList(rows){
 
   list.querySelectorAll("[data-mysub-edit]").forEach(b=>{
     b.addEventListener("click", async ()=>{ mySubEditingId = b.dataset.id; await refreshMySubmissions(); });
+  });
+  list.querySelectorAll("[data-mysub-del]").forEach(b=>{
+    b.addEventListener("click", async ()=>{
+      const id = b.dataset.id;
+      const kategori = b.dataset.kategori;
+      const rec = (mySubData || []).find(x=>x.id===id);
+      const label = rec ? `${rec.item} — ${rec.kategori==="AsetAlih" ? (rec.bilangan+" unit di "+rec.lokasi) : rec.lokasi}` : id;
+      if(!confirm(`Padam permohonan ini?\n\n${label}\n\nTindakan ini tidak boleh diundur.`)) return;
+      b.disabled = true; b.textContent = "Memadam…";
+      const res = await gasCall("sekolahDeleteEntry", { id, kategori, kodSekolah: state.user.kod });
+      if(res.ok){
+        mySubEditingId = null;
+        await refreshMySubmissions();
+      } else {
+        alert(res.msg || "Gagal memadam permohonan.");
+        b.disabled = false; b.textContent = "Padam";
+      }
+    });
   });
   list.querySelectorAll("[data-mysub-cancel]").forEach(b=>{
     b.addEventListener("click", async ()=>{ mySubEditingId = null; await refreshMySubmissions(); });
@@ -1361,17 +1430,64 @@ function renderRingkasan(){
     : `<b>${all.length}</b> sekolah telah membuat permohonan (${scope}) — ${totalAA} Aset Alih, ${totalSK} Selenggara Kecil.`;
   const body = $("#ringkasanTableBody");
   $("#ringkasanEmpty").hidden = all.length > 0;
-  body.innerHTML = rows.map((r,i)=>`
+  body.innerHTML = rows.map((r,i)=>{
+    const aaCell = r.asetAlih > 0
+      ? `<span class="count-link" data-detail-kod="${r.kod}" data-detail-kat="AsetAlih">${r.asetAlih}</span>`
+      : `<span class="count-zero">0</span>`;
+    const skCell = r.selenggara > 0
+      ? `<span class="count-link" data-detail-kod="${r.kod}" data-detail-kat="Selenggara">${r.selenggara}</span>`
+      : `<span class="count-zero">0</span>`;
+    return `
     <tr>
       <td>${i+1}</td>
       <td>${r.kod}</td>
       <td>${r.nama}</td>
       <td>${r.ppd}</td>
-      <td style="text-align:center;">${r.asetAlih}</td>
-      <td style="text-align:center;">${r.selenggara}</td>
+      <td style="text-align:center;">${aaCell}</td>
+      <td style="text-align:center;">${skCell}</td>
       <td style="text-align:center;font-weight:700;color:var(--navy);">${r.jumlah}</td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
+  body.querySelectorAll(".count-link").forEach(el=>{
+    el.addEventListener("click", ()=> showItemModal(el.dataset.detailKod, el.dataset.detailKat));
+  });
 }
+
+/* ---------- Modal senarai item bila nombor diklik ---------- */
+function showItemModal(kod, kategori){
+  const recs = admData.filter(d =>
+    String(d.kodSekolah).trim().toUpperCase() === String(kod).trim().toUpperCase() &&
+    d.kategori === kategori
+  );
+  if(recs.length === 0) return;
+  const first = recs[0];
+  const katLabel = kategori === "AsetAlih" ? "Aset Alih" : "Selenggara Kecil";
+  const itemHeader = kategori === "AsetAlih" ? "Item" : "Jenis Kerosakan";
+
+  $("#modalTitle").textContent = first.sekolah;
+  $("#modalSub").textContent = `${first.kodSekolah} · ${first.ppd} · ${katLabel} (${recs.length})`;
+  $("#modalBody").innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr><th>Bil.</th><th>${itemHeader}</th><th>Butiran</th><th>Justifikasi</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        ${recs.map((r,i)=>`
+          <tr>
+            <td>${i+1}</td>
+            <td>${r.item}</td>
+            <td>${displayButiran(r)}</td>
+            <td>${r.justifikasi}</td>
+            <td><span class="status-pill ${statusPillClass(r.status)}">${r.status}</span></td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+  $("#itemModal").hidden = false;
+}
+function closeItemModal(){ $("#itemModal").hidden = true; }
+$("#modalClose").addEventListener("click", closeItemModal);
+$("#itemModal").addEventListener("click", (e)=>{ if(e.target.id === "itemModal") closeItemModal(); });
+document.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && !$("#itemModal").hidden) closeItemModal(); });
 
 $("#fltCariRingkasan").addEventListener("input", renderRingkasan);
 
