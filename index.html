@@ -196,8 +196,9 @@
     color:var(--navy);padding:8px 16px;border-radius:3px;margin-bottom:26px;
   }
 
-  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
-  @media (max-width:820px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px;}
+  @media (max-width:1000px){.stat-grid{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:640px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
   .stat-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--navy);border-radius:3px;padding:16px 18px;}
   .stat-card .n{font-family:var(--font-display);font-size:26px;color:var(--navy);font-weight:600;}
   .stat-card .l{font-size:12.5px;color:var(--text-muted);margin-top:2px;}
@@ -305,6 +306,23 @@
   }
   .count-link:hover{text-decoration-color:var(--navy);}
   .count-zero{color:var(--text-muted);}
+
+  /* ---------- Sortable headers ---------- */
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+  th.sortable:hover{background:#E3EAF1;}
+  th.sortable .sort-arrow{font-size:10px;color:var(--brass);margin-left:3px;}
+  th.sortable.inactive .sort-arrow{color:#B9C6D4;}
+
+  /* ---------- Duplicate warning ---------- */
+  .dup-badge{
+    display:inline-block;background:var(--danger-bg);color:var(--danger);
+    border:1px solid #F0C9C4;border-radius:20px;font-size:11px;font-weight:600;
+    padding:2px 8px;margin-left:6px;white-space:nowrap;cursor:pointer;
+  }
+  .dup-badge:hover{background:#F7DDD9;}
+  .stat-card.danger{border-left-color:var(--danger);}
+  .stat-card.danger .n{color:var(--danger);}
+  .dup-row-flag{color:var(--danger);font-weight:700;margin-left:4px;}
   .modal-overlay{
     position:fixed;inset:0;background:rgba(15,41,66,.45);z-index:10000;
     display:flex;align-items:center;justify-content:center;padding:20px;
@@ -545,6 +563,7 @@
       <div class="stat-card"><div class="n" id="statAsetAlih">0</div><div class="l">Permohonan Aset Alih</div></div>
       <div class="stat-card brass"><div class="n" id="statSelenggara">0</div><div class="l">Permohonan Selenggara Kecil</div></div>
       <div class="stat-card brass"><div class="n" id="statSekolah">0</div><div class="l">Sekolah Terlibat</div></div>
+      <div class="stat-card danger" id="statDupCard" style="cursor:pointer;" title="Klik untuk lihat senarai pengisian duplikasi"><div class="n" id="statDup">0</div><div class="l">Pengisian Duplikasi</div></div>
     </div>
 
     <div class="panel" id="settingsBar" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;" hidden>
@@ -619,9 +638,9 @@
           <thead>
             <tr>
               <th>Bil.</th><th>Kod Sekolah</th><th>Nama Sekolah</th><th>PPD</th>
-              <th style="text-align:center;">Aset Alih</th>
-              <th style="text-align:center;">Selenggara Kecil</th>
-              <th style="text-align:center;">Jumlah</th>
+              <th class="sortable inactive" data-sort="asetAlih" style="text-align:center;">Aset Alih <span class="sort-arrow">&#9650;&#9660;</span></th>
+              <th class="sortable inactive" data-sort="selenggara" style="text-align:center;">Selenggara Kecil <span class="sort-arrow">&#9650;&#9660;</span></th>
+              <th class="sortable inactive" data-sort="jumlah" style="text-align:center;">Jumlah <span class="sort-arrow">&#9650;&#9660;</span></th>
             </tr>
           </thead>
           <tbody id="ringkasanTableBody"></tbody>
@@ -758,7 +777,11 @@ let demoPermohonan = [
   { id:"RUJ-100301-1", tarikh:"2026-08-27", kategori:"Selenggara", kodSekolah:"AAD3067", sekolah:"SK Jitra", ppd:"PPD Kubang Pasu", item:"ELEKTRIK", bilangan:null, lokasi:"Dewan utama", justifikasi:"Rosak (pecah/reput/lekang)", status:"Selesai" },
   { id:"RUJ-100301-2", tarikh:"2026-08-27", kategori:"Selenggara", kodSekolah:"AAD3067", sekolah:"SK Jitra", ppd:"PPD Kubang Pasu", item:"TANDAS", bilangan:null, lokasi:"Blok C", justifikasi:"Tersumbat", status:"Dalam Tindakan" },
   { id:"RUJ-100340-1", tarikh:"2026-09-01", kategori:"AsetAlih", kodSekolah:"AAF5012", sekolah:"SK Baling", ppd:"PPD Baling", item:"SMART BOARD", bilangan:1, lokasi:"Kelas 6 Cemerlang", justifikasi:"Tambahan", status:"Baru" },
-  { id:"RUJ-100340-2", tarikh:"2026-09-01", kategori:"Selenggara", kodSekolah:"AAF5012", sekolah:"SK Baling", ppd:"PPD Baling", item:"PAGAR", bilangan:null, lokasi:"Pagar hadapan sekolah", justifikasi:"Uzur", status:"Baru" }
+  { id:"RUJ-100340-2", tarikh:"2026-09-01", kategori:"Selenggara", kodSekolah:"AAF5012", sekolah:"SK Baling", ppd:"PPD Baling", item:"PAGAR", bilangan:null, lokasi:"Pagar hadapan sekolah", justifikasi:"Uzur", status:"Baru" },
+  // --- Contoh pengisian duplikasi (untuk demo) ---
+  { id:"RUJ-100231-3", tarikh:"2026-08-15", kategori:"AsetAlih", kodSekolah:"AAB1023", sekolah:"SK Alor Setar", ppd:"PPD Kota Setar", item:"KERUSI MURID", bilangan:25, lokasi:"Kelas 4 Bestari", justifikasi:"Sedia ada Telah Rosak", status:"Baru" },
+  { id:"RUJ-100231-4", tarikh:"2026-08-16", kategori:"AsetAlih", kodSekolah:"AAB1023", sekolah:"SK Alor Setar", ppd:"PPD Kota Setar", item:"KERUSI MURID", bilangan:25, lokasi:"Kelas 4 Bestari", justifikasi:"Sedia ada Telah Rosak", status:"Baru" },
+  { id:"RUJ-100301-3", tarikh:"2026-08-28", kategori:"Selenggara", kodSekolah:"AAD3067", sekolah:"SK Jitra", ppd:"PPD Kubang Pasu", item:"TANDAS", bilangan:null, lokasi:"Blok C", justifikasi:"Tersumbat", status:"Baru" }
 ];
 let editSettingDemo = true; // Kebenaran sekolah sunting permohonan — Pentadbir boleh togol dalam mod demo
 
@@ -1455,6 +1478,44 @@ $("#btnExportBelumCsv").addEventListener("click", ()=>{
 });
 
 /* ---------- Ringkasan Sekolah (jumlah permohonan per sekolah) ---------- */
+/* ---------- Kesan pengisian duplikasi ----------
+   Duplikat = rekod dengan Item + Bilangan + Lokasi + Justifikasi yang SAMA,
+   dalam kategori & sekolah yang sama (tanpa mengira timestamp). Untuk setiap
+   kumpulan sedemikian yang ada >1 rekod, rekod ke-2 dan seterusnya dikira
+   sebagai "pengisian duplikasi". */
+function dupSignature(d){
+  return [
+    String(d.kodSekolah).trim().toUpperCase(),
+    d.kategori,
+    String(d.item).trim().toUpperCase(),
+    d.kategori==="AsetAlih" ? String(d.bilangan).trim() : "",
+    String(d.lokasi).trim().toUpperCase(),
+    String(d.justifikasi).trim().toUpperCase()
+  ].join("||");
+}
+function computeDuplicates(){
+  const groups = {};
+  admData.forEach(d=>{
+    const sig = dupSignature(d);
+    (groups[sig] = groups[sig] || []).push(d);
+  });
+  const dupRecords = [];
+  const dupCountPerSchool = {};
+  let totalExtra = 0;
+  Object.values(groups).forEach(g=>{
+    if(g.length > 1){
+      g.forEach(r=> dupRecords.push(r));
+      const extra = g.length - 1;
+      totalExtra += extra;
+      const kod = String(g[0].kodSekolah).trim().toUpperCase();
+      dupCountPerSchool[kod] = (dupCountPerSchool[kod] || 0) + extra;
+    }
+  });
+  return { dupRecords, dupCountPerSchool, totalExtra };
+}
+
+let ringkasanSort = { key:null, dir:"desc" };
+
 function computeRingkasan(){
   // Kumpul ikut kod sekolah daripada admData (sudah terskop ikut peranan).
   const map = {};
@@ -1466,16 +1527,21 @@ function computeRingkasan(){
     if(d.kategori==="AsetAlih") map[key].asetAlih += 1;
     else map[key].selenggara += 1;
   });
+  const dup = computeDuplicates().dupCountPerSchool;
   return Object.values(map)
-    .map(r => ({...r, jumlah: r.asetAlih + r.selenggara}))
+    .map(r => ({...r, jumlah: r.asetAlih + r.selenggara, dup: dup[String(r.kod).trim().toUpperCase()] || 0 }))
     .sort((a,b)=> (String(a.ppd)+a.nama).localeCompare(String(b.ppd)+b.nama));
 }
 
 function filteredRingkasan(){
   const cari = $("#fltCariRingkasan").value.trim().toLowerCase();
-  const all = computeRingkasan();
-  if(!cari) return all;
-  return all.filter(r => String(r.nama).toLowerCase().includes(cari) || String(r.kod).toLowerCase().includes(cari));
+  let all = computeRingkasan();
+  if(cari) all = all.filter(r => String(r.nama).toLowerCase().includes(cari) || String(r.kod).toLowerCase().includes(cari));
+  if(ringkasanSort.key){
+    const k = ringkasanSort.key, dir = ringkasanSort.dir==="asc" ? 1 : -1;
+    all = all.slice().sort((a,b)=> (a[k]-b[k])*dir || (String(a.ppd)+a.nama).localeCompare(String(b.ppd)+b.nama));
+  }
+  return all;
 }
 
 function renderRingkasan(){
@@ -1484,9 +1550,11 @@ function renderRingkasan(){
   const scope = state.user.peranan === "Admin PPD" ? state.user.ppd : "seluruh Kedah";
   const totalAA = all.reduce((s,r)=>s+r.asetAlih,0);
   const totalSK = all.reduce((s,r)=>s+r.selenggara,0);
+  const totalDup = all.reduce((s,r)=>s+r.dup,0);
+  const dupNote = totalDup > 0 ? ` · <span style="color:var(--danger);font-weight:600;">${totalDup} pengisian duplikasi</span>` : "";
   $("#ringkasanSummary").innerHTML = all.length === 0
     ? `Tiada permohonan direkodkan lagi (${scope}).`
-    : `<b>${all.length}</b> sekolah telah membuat permohonan (${scope}) — ${totalAA} Aset Alih, ${totalSK} Selenggara Kecil.`;
+    : `<b>${all.length}</b> sekolah telah membuat permohonan (${scope}) — ${totalAA} Aset Alih, ${totalSK} Selenggara Kecil${dupNote}.`;
   const body = $("#ringkasanTableBody");
   $("#ringkasanEmpty").hidden = all.length > 0;
   body.innerHTML = rows.map((r,i)=>{
@@ -1496,11 +1564,14 @@ function renderRingkasan(){
     const skCell = r.selenggara > 0
       ? `<span class="count-link" data-detail-kod="${r.kod}" data-detail-kat="Selenggara">${r.selenggara}</span>`
       : `<span class="count-zero">0</span>`;
+    const dupFlag = r.dup > 0
+      ? `<span class="dup-badge" data-dup-kod="${r.kod}" title="Ada ${r.dup} pengisian duplikasi — klik untuk lihat">&#9888; ${r.dup} duplikasi</span>`
+      : "";
     return `
     <tr>
       <td>${i+1}</td>
       <td>${r.kod}</td>
-      <td>${r.nama}</td>
+      <td>${r.nama}${dupFlag}</td>
       <td>${r.ppd}</td>
       <td style="text-align:center;">${aaCell}</td>
       <td style="text-align:center;">${skCell}</td>
@@ -1510,6 +1581,56 @@ function renderRingkasan(){
   body.querySelectorAll(".count-link").forEach(el=>{
     el.addEventListener("click", ()=> showItemModal(el.dataset.detailKod, el.dataset.detailKat));
   });
+  body.querySelectorAll(".dup-badge").forEach(el=>{
+    el.addEventListener("click", ()=> showDupModal(el.dataset.dupKod));
+  });
+  document.querySelectorAll('#admTabRingkasan th.sortable').forEach(th=>{
+    const active = th.dataset.sort === ringkasanSort.key;
+    th.classList.toggle("inactive", !active);
+    const arrow = th.querySelector(".sort-arrow");
+    if(arrow) arrow.innerHTML = active ? (ringkasanSort.dir==="asc" ? "&#9650;" : "&#9660;") : "&#9650;&#9660;";
+  });
+}
+
+document.querySelectorAll('#admTabRingkasan th.sortable').forEach(th=>{
+  th.addEventListener("click", ()=>{
+    const key = th.dataset.sort;
+    if(ringkasanSort.key === key){
+      ringkasanSort.dir = ringkasanSort.dir === "asc" ? "desc" : "asc";
+    } else {
+      ringkasanSort.key = key; ringkasanSort.dir = "desc";
+    }
+    renderRingkasan();
+  });
+});
+
+/* ---------- Modal senarai duplikat untuk satu sekolah ---------- */
+function showDupModal(kod){
+  const dupInfo = computeDuplicates();
+  const recs = dupInfo.dupRecords.filter(d => String(d.kodSekolah).trim().toUpperCase() === String(kod).trim().toUpperCase());
+  if(recs.length === 0) return;
+  const first = recs[0];
+  const groups = {};
+  recs.forEach(d=>{ const s = dupSignature(d); (groups[s]=groups[s]||[]).push(d); });
+
+  let bodyHtml = "";
+  Object.values(groups).forEach(g=>{
+    const d = g[0];
+    const katLabel = d.kategori==="AsetAlih" ? "Aset Alih" : "Selenggara Kecil";
+    bodyHtml += `
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
+        <div style="font-family:var(--font-display);font-weight:600;color:var(--danger);font-size:14px;">
+          &#9888; Diisi ${g.length} kali — ${d.item} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(${katLabel})</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">${displayButiran(d)} · ${d.justifikasi}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Tarikh dihantar: ${g.map(x=>x.tarikh).join(", ")}</div>
+      </div>`;
+  });
+
+  $("#modalTitle").textContent = first.sekolah;
+  $("#modalSub").textContent = `${first.kodSekolah} · ${first.ppd} · Pengisian Duplikasi`;
+  $("#modalBody").innerHTML = bodyHtml;
+  $("#itemModal").hidden = false;
 }
 
 /* ---------- Modal senarai item bila nombor diklik ---------- */
@@ -1681,7 +1802,12 @@ function renderAdminStats(){
   $("#statAsetAlih").textContent = admData.filter(d=>d.kategori==="AsetAlih").length;
   $("#statSelenggara").textContent = admData.filter(d=>d.kategori==="Selenggara").length;
   $("#statSekolah").textContent = new Set(admData.map(d=>d.kodSekolah)).size;
+  $("#statDup").textContent = computeDuplicates().totalExtra;
 }
+// Klik kad Pengisian Duplikasi -> pergi ke tab Ringkasan (sort ikut sekolah ada dup)
+$("#statDupCard").addEventListener("click", ()=>{
+  document.querySelector('.tab-btn[data-admtab="ringkasan"]').click();
+});
 function populateAdminFilters(){
   const ppds = [...new Set(admData.map(d=>d.ppd))].sort();
   const sekolahs = [...new Set(admData.map(d=>d.sekolah))].sort();
