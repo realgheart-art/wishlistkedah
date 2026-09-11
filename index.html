@@ -764,8 +764,23 @@ let schoolMasterSK = [];
 function gasCall(action, params){
   if(DEMO_MODE) return demoHandler(action, params);
   return new Promise((resolve,reject)=>{
-    const cbName = "cb_" + Date.now() + "_" + Math.floor(Math.random()*10000);
-    window[cbName] = (data)=>{ resolve(data); delete window[cbName]; script.remove(); };
+    const cbName = "cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
+    let settled = false;
+    let timer = null;
+
+    function cleanup(){
+      if(timer){ clearTimeout(timer); timer = null; }
+      try{ delete window[cbName]; }catch(e){ window[cbName] = undefined; }
+      if(script && script.parentNode){ script.parentNode.removeChild(script); }
+    }
+
+    window[cbName] = (data)=>{
+      if(settled) return;
+      settled = true;
+      cleanup();
+      resolve(data);
+    };
+
     // Parameter jenis array/objek (cth: senarai entries) mesti dihantar sebagai
     // teks JSON dalam URL — kalau tidak, URLSearchParams tukar jadi "[object Object]"
     // yang tak sah bila cuba di-JSON.parse() di bahagian pelayan.
@@ -774,10 +789,23 @@ function gasCall(action, params){
       const v = params[k];
       serialized[k] = (v !== null && typeof v === "object") ? JSON.stringify(v) : v;
     });
-    const qs = new URLSearchParams({...serialized, action, callback:cbName}).toString();
+    // _ = cache-buster: elak pelayar/GitHub Pages hidangkan respons JSONP lama.
+    const qs = new URLSearchParams({...serialized, action, callback:cbName, _:Date.now()}).toString();
     const script = document.createElement("script");
     script.src = CONFIG.GAS_URL + "?" + qs;
-    script.onerror = ()=>{ reject(new Error("Gagal hubungi server")); delete window[cbName]; };
+    script.onerror = ()=>{
+      if(settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("Gagal hubungi server"));
+    };
+    // Timeout: kalau tiada jawapan dalam 30 saat, berputus asa (elak loading selamanya).
+    timer = setTimeout(()=>{
+      if(settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("Sambungan tamat masa. Sila cuba lagi."));
+    }, 30000);
     document.body.appendChild(script);
   });
 }
@@ -964,38 +992,51 @@ $("#btnLogin").addEventListener("click", async ()=>{
   $("#loginError").innerHTML = "";
   if(!id || !pw){ $("#loginError").innerHTML = '<div class="error-msg">Sila isi ID dan kata laluan.</div>'; return; }
   $("#btnLogin").disabled = true; $("#btnLogin").textContent = "Menyemak…";
-  const res = await gasCall(loginRole==="sekolah" ? "loginSekolah" : "loginAdmin", {id, pw});
-  $("#btnLogin").disabled = false; $("#btnLogin").textContent = "Log Masuk";
-  if(!res.ok){ $("#loginError").innerHTML = `<div class="error-msg">${res.msg}</div>`; return; }
-  state.role = loginRole;
-  state.user = res.user;
-  $("#whoBar").hidden = false;
-  if(loginRole==="sekolah"){
-    $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> · ${res.user.ppd}`;
-    $("#sekolahName").textContent = res.user.nama;
-    $("#sekolahMeta").textContent = `Kod Sekolah: ${res.user.kod} · ${res.user.ppd}`;
-    resetSekolahView();
-    showLoading("Menyediakan portal sekolah…");
-    await loadMasterLists();
-    const editSetting = await gasCall("getEditSetting", {});
-    state.editAllowed = !!(editSetting && editSetting.benarkanEdit);
-    applyEditTextState();
+  try {
+    const res = await gasCall(loginRole==="sekolah" ? "loginSekolah" : "loginAdmin", {id, pw});
+    if(!res.ok){
+      $("#btnLogin").disabled = false; $("#btnLogin").textContent = "Log Masuk";
+      $("#loginError").innerHTML = `<div class="error-msg">${res.msg}</div>`;
+      return;
+    }
+    state.role = loginRole;
+    state.user = res.user;
+    $("#whoBar").hidden = false;
+    if(loginRole==="sekolah"){
+      $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> · ${res.user.ppd}`;
+      $("#sekolahName").textContent = res.user.nama;
+      $("#sekolahMeta").textContent = `Kod Sekolah: ${res.user.kod} · ${res.user.ppd}`;
+      resetSekolahView();
+      showLoading("Menyediakan portal sekolah…");
+      await loadMasterLists();
+      const editSetting = await gasCall("getEditSetting", {});
+      state.editAllowed = !!(editSetting && editSetting.benarkanEdit);
+      applyEditTextState();
+      hideLoading();
+      showView("sekolah");
+    } else {
+      const roleLabel = res.user.peranan + (res.user.ppd ? " · " + res.user.ppd : "");
+      // Penyemak & Admin PPD kedua-duanya pemerhati (tiada edit/tukar status).
+      // Beza: Admin PPD ditapis kepada PPD sendiri; Penyemak nampak semua PPD.
+      state.isViewer = (res.user.peranan === "Penyemak" || res.user.peranan === "Admin PPD");
+      $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> <span class="role-tag">${roleLabel}</span>`;
+      $("#adminMeta").textContent = res.user.nama + " · " + roleLabel;
+      $("#tabMasterBtn").style.display = res.user.peranan === "Pentadbir" ? "" : "none";
+      $("#fltPPD").hidden = res.user.peranan === "Admin PPD";
+      document.querySelector('.tab-btn[data-admtab="data"]').click();
+      showLoading("Memuatkan data permohonan…");
+      showView("admin");
+      await initAdmin();
+      hideLoading();
+    }
+    $("#btnLogin").disabled = false; $("#btnLogin").textContent = "Log Masuk";
+  } catch(err) {
+    // Timeout atau gangguan sambungan — jangan biar loading tergantung.
     hideLoading();
-    showView("sekolah");
-  } else {
-    const roleLabel = res.user.peranan + (res.user.ppd ? " · " + res.user.ppd : "");
-    // Penyemak & Admin PPD kedua-duanya pemerhati (tiada edit/tukar status).
-    // Beza: Admin PPD ditapis kepada PPD sendiri; Penyemak nampak semua PPD.
-    state.isViewer = (res.user.peranan === "Penyemak" || res.user.peranan === "Admin PPD");
-    $("#whoLabel").innerHTML = `<b>${res.user.nama}</b> <span class="role-tag">${roleLabel}</span>`;
-    $("#adminMeta").textContent = res.user.nama + " · " + roleLabel;
-    $("#tabMasterBtn").style.display = res.user.peranan === "Pentadbir" ? "" : "none";
-    $("#fltPPD").hidden = res.user.peranan === "Admin PPD";
-    document.querySelector('.tab-btn[data-admtab="data"]').click();
-    showLoading("Memuatkan data permohonan…");
-    showView("admin");
-    await initAdmin();
-    hideLoading();
+    $("#whoBar").hidden = true;
+    showView("login");
+    $("#btnLogin").disabled = false; $("#btnLogin").textContent = "Log Masuk";
+    $("#loginError").innerHTML = '<div class="error-msg">Sambungan lambat atau terputus. Sila semak internet dan cuba lagi.</div>';
   }
 });
 
