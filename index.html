@@ -125,6 +125,13 @@
   .login-notice .notice-body{font-size:13.5px;line-height:1.5;color:#6B5309;}
   .login-notice .notice-body b{color:#5A4507;}
   .login-notice .notice-body .notice-lead{color:var(--danger);font-size:15px;font-weight:700;}
+  .browser-note{
+    margin-top:16px;font-size:12.5px;line-height:1.5;color:var(--text-muted);
+    background:var(--navy-tint);border:1px solid #D3DEE8;border-radius:3px;padding:10px 12px;
+    display:flex;gap:9px;align-items:flex-start;
+  }
+  .browser-note .bn-icon{flex:none;font-size:15px;line-height:1.2;}
+  .browser-note b{color:var(--navy);}
 
   .greet{margin-bottom:28px;}
   .greet h1{font-size:26px;margin:0 0 4px;}
@@ -383,13 +390,17 @@
         <div id="loginError"></div>
         <div class="field">
           <label id="labelId">Kod Sekolah</label>
-          <input type="text" id="inputId" placeholder="Contoh: AAB1023" autocomplete="username">
+          <input type="text" id="inputId" placeholder="Contoh: AAB1023" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
         </div>
         <div class="field">
           <label id="labelPw">Kata Laluan</label>
-          <input type="password" id="inputPw" placeholder="Kod Sekolah anda" autocomplete="current-password">
+          <input type="password" id="inputPw" placeholder="Kod Sekolah anda" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
         </div>
         <button class="btn btn-primary btn-block" id="btnLogin">Log Masuk</button>
+        <div class="browser-note">
+          <span class="bn-icon">&#128187;</span>
+          <div>Untuk pengalaman terbaik, sila gunakan pelayar <b>Google Chrome</b>. Jika menggunakan Microsoft Edge dan menghadapi masalah log masuk, sila buka dalam mod <b>InPrivate</b> (tekan Ctrl+Shift+N).</div>
+        </div>
         <div class="demo-note" id="demoNote"></div>
       </div>
     </div>
