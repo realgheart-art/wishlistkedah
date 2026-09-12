@@ -3,6 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Cache control: paksa pelayar semak versi terkini, elak fail lama tersimpan degil -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="app-version" content="2026-09-14">
+<script>
+/* ============================================================
+   AUTO CACHE-BUSTER
+   Kalau pelayar muat versi lama fail ini dari cache, skrip ini
+   akan paksa muat semula versi segar SEKALI sahaja (guna penanda
+   dalam URL). Ini elak isu "login tak jadi melainkan Incognito"
+   yang berpunca daripada fail index.html lama tersimpan.
+   ============================================================ */
+(function(){
+  try {
+    var APP_VERSION = "2026-09-14"; // Naikkan tarikh ini setiap kali fail dikemas kini
+    var params = new URLSearchParams(window.location.search);
+    var seen = params.get("appv");
+    if (seen !== APP_VERSION) {
+      // Belum muat versi terkini — paksa muat semula sekali dengan penanda versi.
+      var stored = null;
+      try { stored = sessionStorage.getItem("forced_reload_" + APP_VERSION); } catch(e){}
+      if (!stored) {
+        try { sessionStorage.setItem("forced_reload_" + APP_VERSION, "1"); } catch(e){}
+        params.set("appv", APP_VERSION);
+        var newUrl = window.location.pathname + "?" + params.toString() + window.location.hash;
+        window.location.replace(newUrl);
+      }
+    }
+  } catch(e) { /* kalau gagal, teruskan seperti biasa */ }
+})();
+</script>
 <title>Permohonan Aset Alih &amp; Penyelenggaraan — JPN Kedah</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
