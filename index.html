@@ -7,7 +7,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026-09-14">
+<meta name="app-version" content="2026-09-15">
 <script>
 /* ============================================================
    AUTO CACHE-BUSTER
@@ -18,7 +18,7 @@
    ============================================================ */
 (function(){
   try {
-    var APP_VERSION = "2026-09-14"; // Naikkan tarikh ini setiap kali fail dikemas kini
+    var APP_VERSION = "2026-09-15"; // Naikkan tarikh ini setiap kali fail dikemas kini
     var params = new URLSearchParams(window.location.search);
     var seen = params.get("appv");
     if (seen !== APP_VERSION) {
@@ -1525,9 +1525,9 @@ function dupSignature(d){
     String(d.justifikasi).trim().toUpperCase()
   ].join("||");
 }
-function computeDuplicates(){
+function computeDuplicatesIn(dataset){
   const groups = {};
-  admData.forEach(d=>{
+  dataset.forEach(d=>{
     const sig = dupSignature(d);
     (groups[sig] = groups[sig] || []).push(d);
   });
@@ -1545,6 +1545,7 @@ function computeDuplicates(){
   });
   return { dupRecords, dupCountPerSchool, totalExtra };
 }
+function computeDuplicates(){ return computeDuplicatesIn(admData); }
 
 let ringkasanSort = { key:null, dir:"desc" };
 
@@ -1830,11 +1831,13 @@ function showCarianDetail(kod){
 $("#carianInput").addEventListener("input", renderCarianResults);
 
 function renderAdminStats(){
-  $("#statTotal").textContent = admData.length;
-  $("#statAsetAlih").textContent = admData.filter(d=>d.kategori==="AsetAlih").length;
-  $("#statSelenggara").textContent = admData.filter(d=>d.kategori==="Selenggara").length;
-  $("#statSekolah").textContent = new Set(admData.map(d=>d.kodSekolah)).size;
-  $("#statDup").textContent = computeDuplicates().totalExtra;
+  // Kad statistik ikut penapis semasa (PPD/kategori/sekolah/carian) — bukan admData penuh.
+  const rows = filteredData();
+  $("#statTotal").textContent = rows.length;
+  $("#statAsetAlih").textContent = rows.filter(d=>d.kategori==="AsetAlih").length;
+  $("#statSelenggara").textContent = rows.filter(d=>d.kategori==="Selenggara").length;
+  $("#statSekolah").textContent = new Set(rows.map(d=>d.kodSekolah)).size;
+  $("#statDup").textContent = computeDuplicatesIn(rows).totalExtra;
 }
 // Klik kad Pengisian Duplikasi -> pergi ke tab Ringkasan (sort ikut sekolah ada dup)
 $("#statDupCard").addEventListener("click", ()=>{
@@ -1842,9 +1845,19 @@ $("#statDupCard").addEventListener("click", ()=>{
 });
 function populateAdminFilters(){
   const ppds = [...new Set(admData.map(d=>d.ppd))].sort();
-  const sekolahs = [...new Set(admData.map(d=>d.sekolah))].sort();
   $("#fltPPD").innerHTML = '<option value="">Semua PPD</option>' + ppds.map(p=>`<option value="${p}">${p}</option>`).join("");
+  populateSekolahFilter();
+}
+// Isi dropdown sekolah — kalau PPD dipilih, hanya sekolah dalam PPD tu.
+function populateSekolahFilter(){
+  const selectedPPD = $("#fltPPD").value;
+  const pool = selectedPPD ? admData.filter(d=>d.ppd===selectedPPD) : admData;
+  const sekolahs = [...new Set(pool.map(d=>d.sekolah))].sort();
+  const currentSekolah = $("#fltSekolah").value;
   $("#fltSekolah").innerHTML = '<option value="">Semua Sekolah</option>' + sekolahs.map(s=>`<option value="${s}">${s}</option>`).join("");
+  // Kekalkan pilihan sekolah kalau masih sah dalam PPD baharu, jika tidak reset.
+  if(currentSekolah && sekolahs.includes(currentSekolah)) $("#fltSekolah").value = currentSekolah;
+  else $("#fltSekolah").value = "";
 }
 function currentFilters(){
   return {
@@ -2001,8 +2014,19 @@ function renderAdminTable(){
     });
   });
 }
-["fltKategori","fltPPD","fltSekolah"].forEach(id=>$("#"+id).addEventListener("change", renderAdminTable));
-$("#fltCari").addEventListener("input", renderAdminTable);
+// Fungsi diselaraskan bila mana-mana penapis berubah:
+// PPD berubah -> kemas kini senarai sekolah dulu, kemudian stats + jadual.
+function onFilterChange(){
+  renderAdminStats();
+  renderAdminTable();
+}
+$("#fltPPD").addEventListener("change", ()=>{
+  populateSekolahFilter(); // tapis dropdown sekolah ikut PPD
+  onFilterChange();
+});
+$("#fltKategori").addEventListener("change", onFilterChange);
+$("#fltSekolah").addEventListener("change", onFilterChange);
+$("#fltCari").addEventListener("input", onFilterChange);
 
 $("#btnRefresh").addEventListener("click", async ()=>{
   const btn = $("#btnRefresh");
